@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="author" content="James E. Pustejovsky" />
+
+<meta name="date" content="2016-07-23" />
+
+<title>Cluster-robust standard errors and hypothesis tests in panel data models</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0A%7D%0Apre%20%7B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+<div id="header">
+<h1 class="title">Cluster-robust standard errors and hypothesis tests in panel data models</h1>
+<h4 class="author"><em>James E. Pustejovsky</em></h4>
+<h4 class="date"><em>2016-07-23</em></h4>
+</div>
+
+
+<p>The importance of using cluster-robust variance estimators (i.e., “clustered standard errors”) in panel models is now widely recognized. Less widely recognized is the fact that standard methods for constructing hypothesis tests and confidence intervals based on CRVE can perform quite poorly in when based on a limited number of independent clusters. Furthermore, it can be difficult to determine what counts as a large-enough sample to trust standard CRVE methods, because the finite-sample behavior of the variance estimators and test statistics depends on the configuration of the covariates, not just the total number of clusters.</p>
+<p>One solution to this problem is to use bias-reduced linearization (BRL), which was proposed by Bell and McCaffrey (2002) and has recently begun to receive attention in the econometrics literature (e.g., Cameron &amp; Miller, 2015; Imbens &amp; Kolesar, 2015). The idea of BRL is to correct the bias of standard CRVE based on a working model, and then to use a degrees-of-freedom correction for Wald tests based on the bias-reduced CRVE. That may seem silly (after all, the whole point of CRVE is to avoid making distributional assumptions about the errors in your model), but it turns out that the correction can help quite a bit, even when the working model is wrong. The degrees-of-freedom correction is based on a standard Satterthwaite-type approximation, and also relies on the working model.</p>
+<p>A problem with Bell and McCaffrey’s original formulation of BRL is that it does not work in some very common models for panel data, such as state-by-year panels that include fixed effects for each state and each year (Angrist and Pischke, 2009, point out this issue in their chapter on “non-standard standard error issues”; see also Young, 2016). However, Pustejovsky and Tipton (2016) proposed a generalization of BRL that works even in models with arbitrary sets of fixed effects, and this generalization is implemented in <code>clubSandwich</code> as CRVE type <code>CR2</code>. The package also implements small-sample corrections for multiple-constraint hypothesis tests based on an approximation proposed by Pustejovsky and Tipton (2016). For one-parameter constraints, the test reduces to a t-test with Satterthwaite degrees of freedom, and so it is a natural extension of BRL.</p>
+<p>The following example demonstrates how to use <code>clubSandwich</code> to do cluster-robust inference for a state-by-year panel model with fixed effects in both dimensions, clustering by states.</p>
+<div id="effects-of-changing-the-minimum-legal-drinking-age" class="section level2">
+<h2>Effects of changing the minimum legal drinking age</h2>
+<p>Carpenter and Dobkin (2011) analyzed the effects of changes in the minimum legal drinking age on rates of motor vehicle fatalies among 18-20 year olds, using state-level panel data from the National Highway Traffic Administration’s Fatal Accident Reporting System. In their new textbook, Angrist and Pischke (2014) developed a stylized example based on Carpenter and Dobkin’s work. The following example uses Angrist and Pischke’s data and follows their analysis because their data are <a href="http://masteringmetrics.com/resources/">easily available</a>.</p>
+<p>The outcome is the incidence of deaths in motor vehicle crashes among 18-20 year-olds (per 100,000 residents), for each state plus the District of Columbia, over the period 1970 to 1983. There were several changes in the minimum legal drinking age during this time period, with variability in the timing of changes across states. Angrist and Pischke (following Carpenter and Dobkin) use a difference-in-differences strategy to estimate the effects of lowering the minimum legal drinking age from 21 to 18. Their specification is</p>
+<p><span class="math display">\[y_{it} = \alpha_i + \beta_t + \gamma b_{it} + \delta d_{it} + \epsilon_{it},\]</span></p>
+<p>for <span class="math inline">\(i\)</span> = 1,…,51 and <span class="math inline">\(t\)</span> = 1970,…,1983. In this model, <span class="math inline">\(\alpha_i\)</span> is a state-specific fixed effect, <span class="math inline">\(\beta_t\)</span> is a year-specific fixed effect, <span class="math inline">\(b_{it}\)</span> is the current rate of beer taxation in state <span class="math inline">\(i\)</span> in year <span class="math inline">\(t\)</span>, <span class="math inline">\(d_{it}\)</span> is the proportion of 18-20 year-olds in state <span class="math inline">\(i\)</span> in year <span class="math inline">\(t\)</span> who are legally allowed to drink, and <span class="math inline">\(\delta\)</span> captures the effect of shifting the minimum legal drinking age from 21 to 18. Following Angrist and Pischke’s analysis, we estimate this model both by (unweighted) OLs and by weighted least squares with weights corresponding to population size in a given state and year. We also demonstrate random effects estimation and implement a cluster-robust Hausmann specification test.</p>
+</div>
+<div id="unweighted-ols" class="section level2">
+<h2>Unweighted OLS</h2>
+<p>The following code does some simple data-munging and the estimates the model by OLS:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(clubSandwich)
+<span class="kw">data</span>(MortalityRates)
+
+<span class="co"># subset for deaths in motor vehicle accidents, 1970-1983</span>
+MV_deaths &lt;-<span class="st"> </span><span class="kw">subset</span>(MortalityRates, cause==<span class="st">&quot;Motor Vehicle&quot;</span> &amp;<span class="st"> </span>
+<span class="st">                      </span>year &lt;=<span class="st"> </span><span class="dv">1983</span> &amp;<span class="st"> </span>!<span class="kw">is.na</span>(beertaxa))
+
+<span class="co"># fit by OLS</span>
+lm_unweighted &lt;-<span class="st"> </span><span class="kw">lm</span>(mrate ~<span class="st"> </span><span class="dv">0</span> +<span class="st"> </span>legal +<span class="st"> </span>beertaxa +<span class="st"> </span>
+<span class="st">                      </span><span class="kw">factor</span>(state) +<span class="st"> </span><span class="kw">factor</span>(year), <span class="dt">data =</span> MV_deaths)</code></pre></div>
+<p>The <code>coef_test</code> function from <code>clubSandwich</code> can then be used to test the hypothesis that changing the minimum legal drinking age has no effect on motor vehicle deaths in this cohort (i.e., <span class="math inline">\(H_0: \delta = 0\)</span>). The usual way to test this is to cluster the standard errors by state, calculate the robust Wald statistic, and compare that to a standard normal reference distribution. The code and results are as follows:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef_test</span>(lm_unweighted, <span class="dt">vcov =</span> <span class="st">&quot;CR1&quot;</span>, 
+          <span class="dt">cluster =</span> MV_deaths$state, <span class="dt">test =</span> <span class="st">&quot;naive-t&quot;</span>)[<span class="dv">1</span>:<span class="dv">2</span>,]</code></pre></div>
+<pre><code>##       Coef Estimate Std..Error p-val (naive-t) Sig.
+## 1    legal     7.59       2.44         0.00313   **
+## 2 beertaxa     3.82       5.14         0.46128</code></pre>
+<p>A better approach would be to use the generalized, bias-reduced linearization CRVE, together with Satterthwaite degrees of freedom. In the <code>clubSandwich</code> package, the BRL adjustment is called “CR2” because it is directly analogous to the HC2 correction used in heteroskedasticity-robust variance estimation. When applied to an OLS model estimated by <code>lm</code>, the default working model is an identity matrix, which amounts to the “working” assumption that the errors are all uncorrelated and homoskedastic. Here’s how to apply this approach in the example:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef_test</span>(lm_unweighted, <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>, 
+          <span class="dt">cluster =</span> MV_deaths$state, <span class="dt">test =</span> <span class="st">&quot;Satterthwaite&quot;</span>)[<span class="dv">1</span>:<span class="dv">2</span>,]</code></pre></div>
+<pre><code>##       Coef Estimate Std..Error  d.f. p-val (Satt) Sig.
+## 1    legal     7.59       2.51 24.58      0.00583   **
+## 2 beertaxa     3.82       5.27  5.77      0.49663</code></pre>
+<p>The Satterthwaite degrees of freedom are different for each coefficient in the model, and so the <code>coef_test</code> function reports them right alongside the standard error. For the effect of legal drinking age, the degrees of freedom are about half of what might be expected, given that there are 51 clusters. The p-value for the CR2+Satterthwaite test is about twice as large as the p-value based on the standard Wald test, although the coefficient is still statistically significant at conventional levels. Note, however, that the degrees of freedom on the beer taxation rate are considerably smaller because there are only a few states with substantial variability in taxation rates over time.</p>
+</div>
+<div id="unweighted-within-estimation" class="section level2">
+<h2>Unweighted “within” estimation</h2>
+<p>The <code>plm</code> package in R provides another way to estimate the same model. It is convenient because it absorbs the state and year fixed effects before estimating the effect of <code>legal</code>. The <code>clubSandwich</code> package works with fitted <code>plm</code> models too:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(plm)
+plm_unweighted &lt;-<span class="st"> </span><span class="kw">plm</span>(mrate ~<span class="st"> </span>legal +<span class="st"> </span>beertaxa, <span class="dt">data =</span> MV_deaths, 
+                      <span class="dt">effect =</span> <span class="st">&quot;twoways&quot;</span>, <span class="dt">index =</span> <span class="kw">c</span>(<span class="st">&quot;state&quot;</span>,<span class="st">&quot;year&quot;</span>))</code></pre></div>
+<pre><code>## series cause is constant and has been removed</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef_test</span>(plm_unweighted, <span class="dt">vcov =</span> <span class="st">&quot;CR1&quot;</span>, <span class="dt">cluster =</span> <span class="st">&quot;individual&quot;</span>, <span class="dt">test =</span> <span class="st">&quot;naive-t&quot;</span>)</code></pre></div>
+<pre><code>##       Coef Estimate Std..Error p-val (naive-t) Sig.
+## 1    legal     7.59       2.44         0.00313   **
+## 2 beertaxa     3.82       5.14         0.46128</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef_test</span>(plm_unweighted, <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>, <span class="dt">cluster =</span> <span class="st">&quot;individual&quot;</span>, <span class="dt">test =</span> <span class="st">&quot;Satterthwaite&quot;</span>)</code></pre></div>
+<pre><code>##       Coef Estimate Std..Error  d.f. p-val (Satt) Sig.
+## 1    legal     7.59       2.51 24.58      0.00583   **
+## 2 beertaxa     3.82       5.27  5.77      0.49663</code></pre>
+</div>
+<div id="population-weighted-estimation" class="section level2">
+<h2>Population-weighted estimation</h2>
+<p>The difference between the standard method and the new method are not terribly exciting in the above example. However, things change quite a bit if the model is estimated using population weights. We go back to fitting in <code>lm</code> with dummies for all the fixed effects because <code>plm</code> does not handle weighted least squares.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">lm_weighted &lt;-<span class="st"> </span><span class="kw">lm</span>(mrate ~<span class="st"> </span><span class="dv">0</span> +<span class="st"> </span>legal +<span class="st"> </span>beertaxa +<span class="st"> </span><span class="kw">factor</span>(state) +<span class="st"> </span><span class="kw">factor</span>(year), 
+                  <span class="dt">weights =</span> pop, <span class="dt">data =</span> MV_deaths)
+<span class="kw">coef_test</span>(lm_weighted, <span class="dt">vcov =</span> <span class="st">&quot;CR1&quot;</span>, 
+          <span class="dt">cluster =</span> MV_deaths$state, <span class="dt">test =</span> <span class="st">&quot;naive-t&quot;</span>)[<span class="dv">1</span>:<span class="dv">2</span>,]</code></pre></div>
+<pre><code>##       Coef Estimate Std..Error p-val (naive-t) Sig.
+## 1    legal     7.78       2.01          &lt;0.001  ***
+## 2 beertaxa    11.16       4.20          0.0106    *</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef_test</span>(lm_weighted, <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>, 
+          <span class="dt">cluster =</span> MV_deaths$state, <span class="dt">test =</span> <span class="st">&quot;Satterthwaite&quot;</span>)[<span class="dv">1</span>:<span class="dv">2</span>,]</code></pre></div>
+<pre><code>##       Coef Estimate Std..Error d.f. p-val (Satt) Sig.
+## 1    legal     7.78       2.13 8.52      0.00588   **
+## 2 beertaxa    11.16       4.37 6.85      0.03854    *</code></pre>
+<p>Using population weights slightly reduces the point estimate of the effect, while also slightly increasing its precision. If you were following the standard approach, you would probably be happy with the weighted estimates and wouldn’t think about it any further. However, using the CR2 variance estimator and Satterthwaite correction produces a p-value that is an order of magnitude larger (though still significant at the conventional 5% level). The degrees of freedom are just 8.5—drastically smaller than would be expected based on the number of clusters.</p>
+<p>Even with weights, the <code>coef_test</code> function uses an “independent, homoskedastic” working model as a default for <code>lm</code> objects. In the present example, the outcome is a standardized rate and so a better assumption might be that the error variances are inversely proportional to population size. The following code uses this alternate working model:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef_test</span>(lm_weighted, <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>, 
+          <span class="dt">cluster =</span> MV_deaths$state, <span class="dt">target =</span> <span class="dv">1</span> /<span class="st"> </span>MV_deaths$pop, 
+          <span class="dt">test =</span> <span class="st">&quot;Satterthwaite&quot;</span>)[<span class="dv">1</span>:<span class="dv">2</span>,]</code></pre></div>
+<pre><code>##       Coef Estimate Std..Error  d.f. p-val (Satt) Sig.
+## 1    legal     7.78       2.03 12.64      0.00221   **
+## 2 beertaxa    11.16       4.17  5.06      0.04333    *</code></pre>
+<p>The new working model leads to slightly smaller standard errors and a couple of additional degrees of freedom, though they remain in small-sample territory.</p>
+</div>
+<div id="random-effects-estimation" class="section level2">
+<h2>Random effects estimation</h2>
+<p>If the unobserved effects <span class="math inline">\(\alpha_1,...,\alpha_{51}\)</span> are uncorrelated with the regressors, then a more efficient way to estimate <span class="math inline">\(\gamma,\delta\)</span> is by weighted least squares, with weights based on a random effects model. We still treat the year effects as fixed.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">plm_random &lt;-<span class="st"> </span><span class="kw">plm</span>(mrate ~<span class="st"> </span><span class="dv">0</span> +<span class="st"> </span>legal +<span class="st"> </span>beertaxa +<span class="st"> </span>year, <span class="dt">data =</span> MV_deaths, 
+                  <span class="dt">effect =</span> <span class="st">&quot;individual&quot;</span>, <span class="dt">index =</span> <span class="kw">c</span>(<span class="st">&quot;state&quot;</span>,<span class="st">&quot;year&quot;</span>),
+                  <span class="dt">model =</span> <span class="st">&quot;random&quot;</span>)</code></pre></div>
+<pre><code>## series cause is constant and has been removed</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef_test</span>(plm_random, <span class="dt">vcov =</span> <span class="st">&quot;CR1&quot;</span>, <span class="dt">test =</span> <span class="st">&quot;naive-t&quot;</span>)[<span class="dv">1</span>:<span class="dv">2</span>,]</code></pre></div>
+<pre><code>##       Coef Estimate Std..Error p-val (naive-t) Sig.
+## 1    legal     6.58       2.30         0.00614   **
+## 2 beertaxa     2.38       5.13         0.64437</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef_test</span>(plm_random, <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>, <span class="dt">test =</span> <span class="st">&quot;Satterthwaite&quot;</span>)[<span class="dv">1</span>:<span class="dv">2</span>,]</code></pre></div>
+<pre><code>##       Coef Estimate Std..Error  d.f. p-val (Satt) Sig.
+## 1    legal     6.58       2.37 26.77      0.00982   **
+## 2 beertaxa     2.38       5.21  5.83      0.66439</code></pre>
+<p>With random effects estimation, the effect of legal drinking age is smaller by about 1 death per 100,000. As a procedural aside, note that <code>coef_test</code> infers that <code>state</code> is the clustering variable because the call to plm includes only one type of effects (random state effects).</p>
+</div>
+<div id="robust-hausman-test" class="section level2">
+<h2>Robust Hausman test</h2>
+<p>CRVE is also used in specification tests, as in the artificial Hausman-type test for endogeneity of unobserved effects (Arellano, 1993). As noted above, random effects estimation is more efficient than fixed effects estimation, but requires the assumption that the unobserved effects are uncorrelated with the regressors. However, if the unobserved effects covary with <span class="math inline">\(\mathbf{b}_i, \mathbf{d}_i\)</span>, then the random-effects estimator will be biased.</p>
+<p>We can test for whether endogeneity is a problem by including group-centered covariates as additional regressors. Let <span class="math inline">\(\tilde{d}_{it} = d_{it} - \frac{1}{T}\sum_t d_{it}\)</span>, with <span class="math inline">\(\tilde{b}_{it}\)</span> defined analogously. Now estimate the regression</p>
+<p><span class="math display">\[y_{it} = \beta_t + \gamma_1 b_{it} + \gamma_2 \tilde{b}_{it} + \delta_1 d_{it} + \delta_2 \tilde{d}_{it} + \epsilon_{it},\]</span></p>
+<p>which does not include state fixed effects. The parameters <span class="math inline">\(\gamma_2,\delta_2\)</span> represent the differences between the within-groups and between-groups estimands of <span class="math inline">\(\gamma_1, \delta_1\)</span>. If these are both zero, then the random effects estimator is unbiased. Thus, the joint test for <span class="math inline">\(H_0: \gamma_2 = \delta_2 = 0\)</span> amounts to a test for exogeneity of the unobserved effects.</p>
+<p>For efficiency, we estimate this specification using weighted least squares (although OLS would be valid too):</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">MV_deaths &lt;-<span class="st"> </span><span class="kw">within</span>(MV_deaths, {
+  legal_cent &lt;-<span class="st"> </span>legal -<span class="st"> </span><span class="kw">tapply</span>(legal, state, mean)[<span class="kw">factor</span>(state)]
+  beer_cent &lt;-<span class="st"> </span>beertaxa -<span class="st"> </span><span class="kw">tapply</span>(beertaxa, state, mean)[<span class="kw">factor</span>(state)]
+})
+
+plm_Hausman &lt;-<span class="st"> </span><span class="kw">plm</span>(mrate ~<span class="st"> </span><span class="dv">0</span> +<span class="st"> </span>legal +<span class="st"> </span>beertaxa +<span class="st"> </span>legal_cent +<span class="st"> </span>beer_cent +<span class="st"> </span><span class="kw">factor</span>(year), 
+                   <span class="dt">data =</span> MV_deaths,
+                   <span class="dt">effect =</span> <span class="st">&quot;individual&quot;</span>, <span class="dt">index =</span> <span class="kw">c</span>(<span class="st">&quot;state&quot;</span>,<span class="st">&quot;year&quot;</span>),
+                   <span class="dt">model =</span> <span class="st">&quot;random&quot;</span>)</code></pre></div>
+<pre><code>## series cause is constant and has been removed</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">coef_test</span>(plm_Hausman, <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>, <span class="dt">test =</span> <span class="st">&quot;Satterthwaite&quot;</span>)[<span class="dv">1</span>:<span class="dv">4</span>,]</code></pre></div>
+<pre><code>##         Coef Estimate Std..Error  d.f. p-val (Satt) Sig.
+## 1      legal   -9.180       7.62 24.94       0.2398     
+## 2   beertaxa    3.395       9.40  6.44       0.7295     
+## 3 legal_cent   16.768       8.53 26.85       0.0597    .
+## 4  beer_cent    0.424       9.25  6.38       0.9649</code></pre>
+<p>To conduct a joint test on the centered covariates, we can use the <code>Wald_test</code> function. The usual way to test this hypothesis would be to use the <code>CR1</code> variance estimator to calculate the robust Wald statistic, then use a <span class="math inline">\(\chi^2_2\)</span> reference distribution (or equivalently, compare a re-scaled Wald statistic to an <span class="math inline">\(F(2,\infty)\)</span> distribution). The <code>Wald_test</code> function reports the latter version:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">Wald_test</span>(plm_Hausman, <span class="dt">constraints =</span> <span class="kw">c</span>(<span class="st">&quot;legal_cent&quot;</span>,<span class="st">&quot;beer_cent&quot;</span>), 
+          <span class="dt">vcov =</span> <span class="st">&quot;CR1&quot;</span>, <span class="dt">test =</span> <span class="st">&quot;chi-sq&quot;</span>)</code></pre></div>
+<pre><code>##    Test    F d.f.  p.val
+##  chi-sq 2.93  Inf 0.0534</code></pre>
+<p>The test is just shy of significance at the 5% level. If we instead use the <code>CR2</code> variance estimator and our newly proposed approximate F-test (which is the default in <code>Wald_test</code>), then we get:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">Wald_test</span>(plm_Hausman, <span class="dt">constraints =</span> <span class="kw">c</span>(<span class="st">&quot;legal_cent&quot;</span>,<span class="st">&quot;beer_cent&quot;</span>), <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</code></pre></div>
+<pre><code>##  Test    F d.f. p.val
+##   HTZ 2.56 11.9 0.119</code></pre>
+<p>The low degrees of freedom of the test indicate that we’re definitely in small-sample territory and should not trust the asymptotic <span class="math inline">\(\chi^2\)</span> approximation.</p>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<p>Angrist, J. D., &amp; Pischke, J. (2009). <em>Mostly harmless econometrics: An empiricist’s companion</em>. Princeton, NJ: Princeton University Press.</p>
+<p>Angrist, J. D., and Pischke, J. S. (2014). <em>Mastering’metrics: the path from cause to effect</em>. Princeton, NJ: Princeton University Press.</p>
+<p>Arellano, M. (1993). On the testing of correlated effects with panel data. Journal of Econometrics, 59(1-2), 87-97. doi: <a href="http://www.sciencedirect.com/science/article/pii/030440769390040C">10.1016/0304-4076(93)90040-C</a></p>
+<p>Bell, R. M., &amp; McCaffrey, D. F. (2002). Bias reduction in standard errors for linear regression with multi-stage samples. <em>Survey Methodology, 28</em>(2), 169-181.</p>
+<p>Cameron, A. C., &amp; Miller, D. L. (2015). A practitioner’s guide to cluster-robust inference. URL: <a href="http://cameron.econ.ucdavis.edu/research/Cameron_Miller_JHR_2015_February.pdf" class="uri">http://cameron.econ.ucdavis.edu/research/Cameron_Miller_JHR_2015_February.pdf</a></p>
+<p>Carpenter, C., &amp; Dobkin, C. (2011). The minimum legal drinking age and public health. <em>Journal of Economic Perspectives, 25</em>(2), 133-156. doi: <a href="http://dx.doi.org/10.1257/jep.25.2.133">10.1257/jep.25.2.133</a></p>
+<p>Imbens, G. W., &amp; Kolesar, M. (2015). Robust standard errors in small samples: Some practical advice. URL: <a href="https://www.princeton.edu/~mkolesar/papers/small-robust.pdf" class="uri">https://www.princeton.edu/~mkolesar/papers/small-robust.pdf</a></p>
+<p>Pustejovsky, J. E. &amp; Tipton, E. (2016). Small sample methods for cluster-robust variance estimation and hypothesis testing in fixed effects models. arXiv: <a href="https://arxiv.org/abs/1601.01981">1601.01981</a> [stat.ME]</p>
+<p>Young, A. (2016). Improved, nearly exact, statistical inference with robust and clustered covariance matrices using effective degrees of freedom corrections.</p>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
