@@ -20,21 +20,31 @@
 #' @param inverse_var Optional logical indicating whether the weights used in 
 #'   fitting the model are inverse-variance. If not specified, \code{vcovCR} 
 #'   will attempt to infer a value.
+#' @param form Controls the form of the returned matrix. The default 
+#'   \code{"sandwich"} will return the sandwich variance-covariance matrix. 
+#'   Alternately, setting \code{form = "meat"} will return only the meat of the 
+#'   sandwich and setting \code{form = B}, where \code{B} is a matrix of 
+#'   appropriate dimension, will return the sandwich variance-covariance matrix 
+#'   calculated using \code{B} as the bread.
+#' @param ... Additional arguments available for some classes of objects.
 #'   
 #' @description This is a generic function, with specific methods defined for 
-#' \code{\link[stats]{lm}}, \code{\link[plm]{plm}}, \code{\link[nlme]{gls}},
-#' \code{\link[nlme]{lme}}, \code{\link[robumeta]{robu}}, \code{\link[metafor]{rma.uni}}, and \code{\link[metafor]{rma.mv}} objects.
-#' 
+#'   \code{\link[stats]{lm}}, \code{\link[plm]{plm}}, \code{\link[nlme]{gls}}, 
+#'   \code{\link[nlme]{lme}}, \code{\link[robumeta]{robu}}, 
+#'   \code{\link[metafor]{rma.uni}}, and \code{\link[metafor]{rma.mv}} objects.
+#'   
 #' @return An object of class \code{c("vcovCR","clubSandwich")}, which consists 
 #'   of a matrix of the estimated variance of and covariances between the 
 #'   regression coefficient estimates. The matrix has several attributes: 
 #'   \describe{ \item{type}{indicates which small-sample adjustment was used} 
 #'   \item{cluster}{contains the factor vector that defines independent 
-#'   clusters} \item{estmats}{contains a list of adjustment matrices used to 
-#'   calculate the sandwich estimator, which are needed for calculating 
-#'   small-sample corrections for Wald tests} \item{target}{contains the working
+#'   clusters} \item{bread}{contains the bread matrix} \item{v_scale}{constant 
+#'   used in scaling the sandwich estimator} \item{est_mats}{contains a list of 
+#'   estimating matrices used to calculate the sandwich estimator} 
+#'   \item{adjustments}{contains a list of adjustment matrices used to calculate
+#'   the sandwich estimator} \item{target}{contains the working 
 #'   variance-covariance model used to calculate the adjustment matrices. This 
-#'   is also needed for calculating small-sample corrections for Wald tests.} }
+#'   is needed for calculating small-sample corrections for Wald tests.} }
 #'   
 #' @seealso \code{\link{vcovCR.lm}}, \code{\link{vcovCR.plm}}, 
 #'   \code{\link{vcovCR.gls}}, \code{\link{vcovCR.lme}}, 
@@ -44,7 +54,7 @@
 #' @export
 #' @import stats
 
-vcovCR <- function(obj, cluster, type, target, inverse_var) UseMethod("vcovCR")
+vcovCR <- function(obj, cluster, type, target, inverse_var, form, ...) UseMethod("vcovCR")
 
 #' Cluster-robust variance-covariance matrix
 #' 
@@ -54,20 +64,31 @@ vcovCR <- function(obj, cluster, type, target, inverse_var) UseMethod("vcovCR")
 #' @rdname vcovCR
 #' @export
 
-vcovCR.default <- function(obj, cluster, type, target = NULL, inverse_var = FALSE) 
-  vcov_CR(obj, cluster, type, target, inverse_var)
+vcovCR.default <- function(obj, cluster, type, target = NULL, inverse_var = FALSE, form = "sandwich", ...) 
+  vcov_CR(obj, cluster, type, target, inverse_var, form)
 
 #---------------------------------------------
 # Cluster-robust variance estimator
 #---------------------------------------------
 
-# uses methods residuals_CR(), model_matrix(), weightMatrix(), targetVariance()
+adjust_est_mats <- function(type, est_mats, adjustments) {
+  switch(type,
+         CR0 = est_mats,
+         CR1 = lapply(est_mats, function(e) e * adjustments),
+         CR1S = lapply(est_mats, function(e) e * adjustments),
+         CR2 = Map(function(e, a) e %*% a, e = est_mats, a = adjustments),
+         CR3 = Map(function(e, a) e %*% a, e = est_mats, a = adjustments),
+         CR4 = Map(function(e, a) a %*% e, e = est_mats, a = adjustments))
+}
 
-vcov_CR <- function(obj, cluster, type, target = NULL, inverse_var = FALSE) {
+# uses methods residuals_CS(), model_matrix(), weightMatrix(), 
+# targetVariance(), bread(), v_scale()
+
+vcov_CR <- function(obj, cluster, type, target = NULL, inverse_var = FALSE, form = "sandwich", ignore_FE = FALSE) {
   
   cluster <- droplevels(as.factor(cluster))
   
-  alias <- is.na(coef_CR(obj))
+  alias <- is.na(coef_CS(obj))
   X <- model_matrix(obj)
   Xp <- projection_matrix(obj)
   if (any(alias)) {
@@ -89,11 +110,8 @@ vcov_CR <- function(obj, cluster, type, target = NULL, inverse_var = FALSE) {
   
   X_list <- matrix_list(X, cluster, "row")
   Xp_list <- matrix_list(Xp, cluster, "row")
-  
   W_list <- weightMatrix(obj, cluster)
   XpW_list <- Map(function(x, w) as.matrix(t(x) %*% w), x = Xp_list, w = W_list)
-  XpWX_list <- Map(function(xw, x) xw %*% x, xw = XpW_list, x = X_list)
-  M <- chol2inv(chol(Reduce("+", XpWX_list)))
   
   if (is.null(target)) {
     if (inverse_var) {
@@ -110,14 +128,16 @@ vcov_CR <- function(obj, cluster, type, target = NULL, inverse_var = FALSE) {
   }
   
   if (type %in% c("CR2","CR4")) {
-    S <- augmented_model_matrix(obj, cluster, inverse_var)
+    S <- augmented_model_matrix(obj, cluster, inverse_var, ignore_FE)
     
     if (is.null(S)) {
+      rm(S)
       U_list <- Xp_list
       UW_list <- XpW_list
-      M_U <- M
+      M_U <- bread(obj) / v_scale(obj)
     } else {
       U <- cbind(Xp, S)
+      rm(S)
       U_list <- matrix_list(U, cluster, "row")
       UW_list <- Map(function(u, w) as.matrix(t(u) %*% w), u = U_list, w = W_list)
       UWU_list <- Map(function(uw, u) uw %*% u, uw = UW_list, u = U_list)
@@ -125,20 +145,40 @@ vcov_CR <- function(obj, cluster, type, target = NULL, inverse_var = FALSE) {
     }
   }
   
-  E_list <- do.call(type, args = mget(names(formals(type))))
-
-  resid <- residuals_CR(obj)
-
+  adjustments <- do.call(type, args = mget(names(formals(type))))
+  
+  E_list <- adjust_est_mats(type = type, est_mats = XpW_list, adjustments = adjustments)
+  
+  resid <- residuals_CS(obj)
   res_list <- split(resid, cluster)
   
   components <- do.call(cbind, Map(function(e, r) e %*% r, e = E_list, r = res_list))
-  vcov <- tcrossprod(components)
+  
+  v_scale <- v_scale(obj)
+  meat <- tcrossprod(components) / v_scale
+  
+  if (form == "sandwich") {
+    bread <- sandwich::bread(obj)
+  } else if (form == "meat") {
+    bread <- NULL
+  } else if (is.matrix(form)) {
+    bread <- form
+    form <- "sandwich"
+  } 
+  
+  vcov <- switch(form, 
+                 sandwich = bread %*% meat %*% bread / v_scale,
+                 meat = meat)
   rownames(vcov) <- colnames(vcov) <- colnames(X)
   attr(vcov, "type") <- type
   attr(vcov, "cluster") <- cluster
-  attr(vcov, "estmats") <- E_list
+  attr(vcov, "bread") <- bread
+  attr(vcov, "v_scale") <- v_scale
+  attr(vcov, "est_mats") <- XpW_list
+  attr(vcov, "adjustments") <- adjustments
   attr(vcov, "target") <- Theta_list
   attr(vcov, "inverse_var") <- inverse_var
+  attr(vcov, "ignore_FE") <- ignore_FE
   class(vcov) <- c("vcovCR","clubSandwich")
   return(vcov)
 }
@@ -152,9 +192,13 @@ vcov_CR <- function(obj, cluster, type, target = NULL, inverse_var = FALSE) {
 as.matrix.clubSandwich <- function(x, ...) {
   attr(x, "type") <- NULL
   attr(x, "cluster") <- NULL
-  attr(x, "estmats") <- NULL
+  attr(x, "bread") <- NULL
+  attr(x, "v_scale") <- NULL
+  attr(x, "est_mats") <- NULL
+  attr(x, "adjustments") <- NULL
   attr(x, "target") <- NULL
   attr(x, "inverse_var") <- NULL
+  attr(x, "ignore_FE") <- NULL
   class(x) <- "matrix"
   x
 }
@@ -168,84 +212,4 @@ as.matrix.clubSandwich <- function(x, ...) {
 
 print.clubSandwich <- function(x, ...) {
   print(as.matrix(x))
-}
-
-#---------------------------------------------
-# matrix manipulation functions
-#---------------------------------------------
-
-sub_f <- function(x, fac, dim) {
-  function(f) switch(dim,
-                      row = x[fac==f, ,drop=FALSE],
-                      col = x[ ,fac==f, drop=FALSE],
-                      both = x[fac==f, fac==f, drop=FALSE])
-}
-
-matrix_list <- function(x, fac, dim) {
-  if (is.vector(x)) {
-    if (dim != "both") stop(paste0("Object must be a matrix in order to subset by ",dim,"."))
-    x_list <- split(x, fac)
-    lapply(x_list, function(x) diag(x, nrow = length(x)))
-  } else {
-    lapply(levels(fac), sub_f(x, fac, dim)) 
-  }
-}
-
-matrix_power <- function(x, p, symmetric = TRUE, tol = -12) {
-  eig <- eigen(x, symmetric = symmetric)
-  val_p <- with(eig, ifelse(values > 10^tol, values^p, 0))
-  with(eig, vectors %*% (val_p * t(vectors)))
-}
-
-chol_psd <- function(x) with(eigen(x, symmetric=TRUE), sqrt(pmax(values,0)) * t(vectors))
-
-#--------------------------
-# get S array
-#--------------------------
-
-Sj <- function(e, u, tc, cl, cluster, MUWTheta_cholT) {
-  s <- -u %*% MUWTheta_cholT
-  s[,cluster==cl] <- tc + s[,cluster==cl]
-  e %*% s
-}
-
-get_S_array <- function(obj, vcov) {
-  
-  cluster <- attr(vcov, "cluster")
-  E_list <- attr(vcov, "estmats")
-  target <- attr(vcov, "target")
-  inverse_var <- attr(vcov, "inverse_var")
-  
-  N <- length(cluster)
-  J <- nlevels(cluster)
-  
-  X <- model_matrix(obj)
-  alias <- is.na(coef_CR(obj))
-  if (any(alias)) X <- X[, !alias, drop = FALSE]
-  p <- ncol(X)
-  
-  S <- augmented_model_matrix(obj, cluster, inverse_var)
-  
-  if (is.null(S)) {
-    U <- X
-  } else {
-    U <- cbind(X, S)
-  }
-  
-  U_list <- matrix_list(U, cluster, "row")
-  
-  W_list <- weightMatrix(obj, cluster)
-  
-  UW_list <- Map(function(u, w) as.matrix(t(u) %*% w), u = U_list, w = W_list)
-  UWU_list <- Map(function(uw, u) uw %*% u, uw = UW_list, u = U_list)
-  M_U <- chol2inv(chol(Reduce("+",UWU_list)))
-
-  Theta_cholT <- lapply(target, function(x) t(chol(x)))
-  UWThetaC_list <- Map(function(uw, tc) uw %*% tc, uw = UW_list, tc = Theta_cholT)
-  MUWTheta_cholT <- M_U %*% (matrix(unlist(UWThetaC_list), ncol(U), N)[,order(order(cluster))])
-  
-  S_list <- mapply(Sj, e = E_list, u = U_list, tc = Theta_cholT, cl = levels(cluster),
-                   MoreArgs = list(cluster=cluster, MUWTheta_cholT=MUWTheta_cholT), SIMPLIFY = FALSE)
-
-  array(unlist(S_list), dim = c(p, N, J))
 }

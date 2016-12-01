@@ -23,15 +23,27 @@
 #'   
 #' @export
 
-vcovCR.lm <- function(obj, cluster, type, target = NULL, inverse_var = NULL) {
+vcovCR.lm <- function(obj, cluster, type, target = NULL, inverse_var = NULL, form = "sandwich", ...) {
   if (missing(cluster)) stop("You must specify a clustering variable.")
   if (is.null(inverse_var)) inverse_var <- is.null(weights(obj)) & is.null(target)
-  vcov_CR(obj, cluster = cluster, type = type, target = target, inverse_var = inverse_var)
+  vcov_CR(obj, cluster = cluster, type = type, 
+          target = target, inverse_var = inverse_var, form = form)
 }
 
 # model_matrix()
-# residuals_CR()
+# residuals_CS()
 # coef()
 # nobs()
 # targetVariance()
 # weightMatrix()
+
+
+#---------------------------------------
+# Get bread matrix and scaling constant
+#---------------------------------------
+
+# bread.lm() is in sandwich package
+
+v_scale.lm <- function(obj) {
+  as.vector(sum(summary(obj)$df[1:2]))
+}

@@ -52,6 +52,19 @@ test_that("CR2 t-tests agree with robumeta for user weighting", {
   # expect_equal(hier_robu$reg_table$prob, CR2_ttests$p_Satt)
 })
 
+test_that("bread works", {
+  expect_true(check_bread(corr_meta, cluster = corrdat$studyid, y = corrdat$effectsize))
+  X <- model_matrix(corr_meta)
+  W <- corr_meta$weights
+  V <- corr_meta$vi
+  vcov_corr <- crossprod((sqrt(V) * W * X) %*% bread(corr_meta) / nobs(corr_meta))
+  attr(vcov_corr, "dimnames") <- attr(vcov(corr_meta), "dimnames")
+  expect_equal(vcov(corr_meta), vcov_corr)
+
+  expect_true(check_bread(hier_meta, cluster = hierdat$studyid, y = hierdat$effectsize))
+  expect_equal(vcov(hier_meta), bread(hier_meta) / nobs(hier_meta))
+})
+
 CR_types <- paste0("CR",0:4)
 
 test_that("order doesn't matter", {

@@ -3,8 +3,8 @@
 #--------------------------------------------------
 
 get_constraint_mat <- function(obj, constraints) {
-  p <- length(coef_CR(obj))
-  beta_NA <- is.na(coef_CR(obj))
+  p <- length(coef_CS(obj))
+  beta_NA <- is.na(coef_CS(obj))
   
   C_mat <- switch(class(constraints),
         matrix = {
@@ -28,7 +28,7 @@ get_constraint_mat <- function(obj, constraints) {
           diag(1L, nrow = p)[constraints,,drop=FALSE]              
         },
         character = {
-          term_names <- names(coef_CR(obj))
+          term_names <- names(coef_CS(obj))
           if (any(!constraints %in% term_names)) stop("Constraint names not in model specification.")
           if (length(constraints) == 0) stop("You must specify at least one constraint.")
           diag(1L, nrow = p)[term_names %in% constraints,,drop=FALSE]
@@ -41,28 +41,15 @@ get_constraint_mat <- function(obj, constraints) {
 #--------------------------------------------------
 # calculate a covariance array
 #--------------------------------------------------
-sub_three <- function(arr, subset) {
-  arr_sub <- arr[,,subset]
-  dim_three <- if (length(subset)==1) NULL else length(subset)
-  arr_dim <- c(dim(arr)[1:2], dim_three)
-  dim(arr_sub) <- arr_dim
-  arr_sub
-}
 
-covariance_array <- function(S_array, Omega_nsqrt, q = nrow(Omega_nsqrt), J = dim(S_array)[3]) {
-  B_array <- array(apply(S_array, 3, function(s) Omega_nsqrt %*% s), dim = dim(S_array))
-  B_jk <- array(NA, dim = c(J, J, q, q))
-  if (q > 1) {
-    for (j in 1:J) for (k in 1:j) {
-      L <- sub_three(B_array,j) %*% t(sub_three(B_array,k))
-      B_jk[j,k,,] <- L
-      B_jk[k,j,,] <- t(L)
-    }
-  } else B_jk[,,1,1] <- crossprod(B_array[1,,])
+covariance_array <- function(P_array, Omega_nsqrt, q = nrow(Omega_nsqrt)) {
+  
+  B_jk <- array(apply(P_array, 3:4, function(p) Omega_nsqrt %*% p %*% Omega_nsqrt), 
+                dim = dim(P_array))
   
   Cov_arr <- array(NA, dim = rep(q, 4))
   for (s in 1:q) for (t in 1:s) for (u in 1:s) for (v in 1:(ifelse(u==s,t,u))) {
-    temp <- sum(B_jk[,,s,v] * B_jk[,,t,u]) + sum(B_jk[,,s,u] * B_jk[,,t,v])
+    temp <- sum(B_jk[s,v,,] * B_jk[t,u,,]) + sum(B_jk[s,u,,] * B_jk[t,v,,])
     Cov_arr[s,t,u,v] <- temp
     Cov_arr[s,t,v,u] <- temp
     Cov_arr[t,s,u,v] <- temp
@@ -79,17 +66,12 @@ covariance_array <- function(S_array, Omega_nsqrt, q = nrow(Omega_nsqrt), J = di
 # calculate total variance of clubSandwich estimator
 #---------------------------------------------------------
 
-total_variance_mat <- function(S_array, Omega_nsqrt, q = nrow(Omega_nsqrt), J = dim(S_array)[3]) {
-  B_array <- array(apply(S_array, 3, function(s) Omega_nsqrt %*% s), dim = dim(S_array))
-  B_jk <- array(NA, dim = c(J, J, q, q))
-  for (j in 1:J) for (k in 1:j) {
-    L <- sub_three(B_array,j) %*% t(sub_three(B_array,k))
-    B_jk[j,k,,] <- L
-    B_jk[k,j,,] <- t(L)
-  }
+total_variance_mat <- function(P_array, Omega_nsqrt, q = nrow(Omega_nsqrt)) {
+  B_jk <- array(apply(P_array, 3:4, function(p) Omega_nsqrt %*% p %*% Omega_nsqrt), dim = dim(P_array))
+  
   var_mat <- matrix(NA, q, q)
   for (s in 1:q) for (t in 1:s) {
-    temp <- sum(B_jk[,,s,t] * B_jk[,,t,s]) + sum(B_jk[,,s,s] * B_jk[,,t,t])
+    temp <- sum(B_jk[s,t,,] * B_jk[t,s,,]) + sum(B_jk[s,s,,] * B_jk[t,t,,])
     var_mat[s,t] <- temp
     var_mat[t,s] <- temp
   }
@@ -148,29 +130,44 @@ Wald_test <- function(obj, constraints, vcov, test = "HTZ", ...) {
 
   if (all(test == "All")) test <- c("chi-sq","Naive-F","HTA","HTB","HTZ","EDF","EDT")
   
-  beta <- na.omit(coef_CR(obj))
+  beta <- na.omit(coef_CS(obj))
   
-  S_array <- get_S_array(obj, vcov)
+  GH <- get_GH(obj, vcov)
   
   if (is.list(constraints)) {
     C_mats <- lapply(constraints, get_constraint_mat, obj = obj)
-    results <- lapply(C_mats, Wald_testing, beta = beta, vcov = vcov, test = test, S_array = S_array)
+    results <- lapply(C_mats, Wald_testing, beta = beta, vcov = vcov, test = test, GH = GH)
   } else {
     C_mat <- get_constraint_mat(obj, constraints)
-    results <- Wald_testing(C_mat, beta = beta, vcov = vcov, test = test, S_array = S_array) 
+    results <- Wald_testing(C_mat, beta = beta, vcov = vcov, test = test, GH = GH) 
   }
   
   results
 }
 
-Wald_testing <- function(C_mat, beta, vcov, test, S_array) {
-  q <- nrow(C_mat)
+
+array_multiply <- function(mat, arr) {
+  new_mat <- apply(arr, 3, function(s) mat %*% s)
+  array(new_mat, dim = c(nrow(mat), dim(arr)[2], dim(arr)[3]))
+}
+
+Wald_testing <- function(C_mat, beta, vcov, test, GH) {
   
-  if (any(c("chi-sq","Naive-F","HTA","HTB","HTZ","EDF","EDT") %in% test)) {
-    N <- dim(S_array)[2]
-    J <- dim(S_array)[3]
-    S_array <- array(apply(S_array, 3, function(s) C_mat %*% s), dim = c(q, N, J))
-    Omega <- apply(array(apply(S_array, 3, tcrossprod), dim = c(q,q,J)), 1:2, sum)
+  q <- nrow(C_mat)
+  dims <- dim(GH$H)
+  J <- dims[length(dims)]
+  
+  if (any(c("HTA","HTB","HTZ","EDF","EDT") %in% test)) {
+    GH$G <- lapply(GH$G, function(s) C_mat %*% s)
+    if (length(dims)==3) {
+      GH$H <- array_multiply(C_mat, GH$H)
+    } else {
+      H <- array(NA, dim = c(3, q, dims[3:4]))
+      for (i in 1:dims[1]) H[i,,,] <- array_multiply(C_mat, GH$H[i,,,])
+      GH$H <- H
+    }
+    P_array <- get_P_array(GH = GH, all_terms = TRUE)
+    Omega <- apply(P_array, 1:2, function(x) sum(diag(x)))
     Omega_nsqrt <- matrix_power(Omega, -1/2)
   }
   
@@ -193,7 +190,7 @@ Wald_testing <- function(C_mat, beta, vcov, test, S_array) {
   
   # Hotelling's T-squared
   if ("HTA" %in% test | "HTB" %in% test) {
-    Cov_arr <- covariance_array(S_array, Omega_nsqrt, q = q, J = J)
+    Cov_arr <- covariance_array(P_array, Omega_nsqrt, q = q)
     
     Var_index <- seq(1,q^4, 1 + q^2)
     Var_mat <- matrix(Cov_arr[Var_index], q, q)
@@ -213,7 +210,7 @@ Wald_testing <- function(C_mat, beta, vcov, test, S_array) {
       result <- cbind(result, "HTB" = Hotelling_Tsq(Q, q, nu = nu_B))
     } 
   } else if ("HTZ" %in% test) {
-    Var_mat <- total_variance_mat(S_array, Omega_nsqrt, q = q, J = J)
+    Var_mat <- total_variance_mat(P_array, Omega_nsqrt, q = q)
   }
   
   if ("HTZ" %in% test) {
@@ -225,9 +222,10 @@ Wald_testing <- function(C_mat, beta, vcov, test, S_array) {
   
   if ("EDF" %in% test | "EDT" %in% test) {
     spec <- eigen(Omega_nsqrt %*% C_mat %*% vcov %*% t(C_mat) %*% t(Omega_nsqrt))
-    D_array <- array(apply(S_array, 3, function(s) t(spec$vector) %*% Omega_nsqrt %*% s), dim = dim(S_array))
-    df_eig <- 1 / apply(D_array, 1, function(d) sum(crossprod(d)^2))
-    
+    df_eig <- 1 / apply(t(spec$vectors) %*% Omega_nsqrt, 1, 
+                        function(x) sum(apply(P_array, 3:4, 
+                                              function(P) (t(x) %*% P %*% x)^2)))
+
     if ("EDF" %in% test) {
       df4 <- pmax(df_eig, 4.1)
       EQ <- sum(df4 / (df4 - 2))
@@ -240,7 +238,7 @@ Wald_testing <- function(C_mat, beta, vcov, test, S_array) {
     }
     
     if ("EDT" %in% test) {
-      t_j <- t(spec$vector) %*% Omega_nsqrt %*% C_mat %*% beta / sqrt(spec$values)
+      t_j <- t(spec$vectors) %*% Omega_nsqrt %*% C_mat %*% beta / sqrt(spec$values)
       a_j <- df_eig - 1 / 2
       b_j <- 48 * a_j^2
       c_j <- sqrt(a_j * log(1 + t_j^2 / df_eig))

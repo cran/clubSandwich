@@ -13,6 +13,7 @@ data("Produc", package = "plm")
 CR_types <- paste0("CR",0:4)
 
 plm_individual <- plm(inv ~ value + capital, data = Grunfeld, model="random")
+obj <- plm_individual
 
 test_that("individual effects agree with gls", {
   icc <- with(plm_individual$ercomp$sigma2, id / (id + idios))
@@ -24,7 +25,7 @@ test_that("individual effects agree with gls", {
   V_ratio <- Map("/", targetVariance(plm_individual, cluster = Grunfeld$firm),
                  targetVariance(gls_individual, cluster = Grunfeld$firm))
   expect_equal(lapply(V_ratio, min), lapply(V_ratio, max))
-  expect_equivalent(residuals_CR(plm_individual), residuals_CR(gls_individual))
+  expect_equivalent(residuals_CS(plm_individual), residuals_CS(gls_individual))
 
   CR_plm <- lapply(CR_types, function(x) vcovCR(plm_individual, type = x))
   CR_gls <- lapply(CR_types, function(x) vcovCR(gls_individual, type = x))
@@ -51,7 +52,7 @@ test_that("time effects agree with gls", {
   V_ratio <- Map("/", targetVariance(plm_time, cluster = Produc$year),
                  targetVariance(gls_time, cluster = Produc$year))
   expect_equal(lapply(V_ratio, min), lapply(V_ratio, max))
-  expect_equivalent(residuals_CR(plm_time), residuals_CR(gls_time))
+  expect_equivalent(residuals_CS(plm_time), residuals_CS(gls_time))
   
   CR_plm <- lapply(CR_types, function(x) vcovCR(plm_time, type = x))
   CR_gls <- lapply(CR_types, function(x) vcovCR(gls_time, type = x))
@@ -72,17 +73,25 @@ test_that("two-way effects throws error", {
   expect_error(vcovCR(plm_twoways, type = "CR2"))
 })
 
+test_that("bread works", {
+  expect_true(check_bread(plm_individual, 
+                          cluster = findCluster.plm(plm_individual), 
+                          y = plm_individual$model$inv))
+  expect_true(check_bread(plm_time, 
+                          cluster = findCluster.plm(plm_time), 
+                          y = plm_time$model$"log(gsp)"))
+})
 
 test_that("CR0 and CR1S agree with arellano vcov", {
   expect_equal(vcovHC(plm_individual, method="arellano", type = "HC0", cluster = "group"), 
-               as.matrix(vcovCR(plm_individual, type = "CR0")))
+               as.matrix(vcovCR(plm_individual, type = "CR0")), check.attributes = FALSE)
   expect_equal(vcovHC(plm_individual, method="arellano", type = "sss", cluster = "group"), 
-               as.matrix(vcovCR(plm_individual, type = "CR1S")))
+               as.matrix(vcovCR(plm_individual, type = "CR1S")), check.attributes = FALSE)
   
   expect_equal(vcovHC(plm_time, method="arellano", type = "HC0", cluster = "time"), 
-               as.matrix(vcovCR(plm_time, type = "CR0")))
+               as.matrix(vcovCR(plm_time, type = "CR0")), check.attributes = FALSE)
   expect_equal(vcovHC(plm_time, method="arellano", type = "sss", cluster = "time"), 
-               as.matrix(vcovCR(plm_time, type = "CR1S")))
+               as.matrix(vcovCR(plm_time, type = "CR1S")), check.attributes = FALSE)
 })
 
 

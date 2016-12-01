@@ -43,7 +43,7 @@
 #' Wald_test(mfor_fit, constraints = c(2,4), vcov = mfor_CR2)
 #' Wald_test(mfor_fit, constraints = 2:5, vcov = mfor_CR2)
 
-vcovCR.rma.mv <- function(obj, cluster, type, target, inverse_var) {
+vcovCR.rma.mv <- function(obj, cluster, type, target, inverse_var, form = "sandwich", ...) {
   if (missing(cluster)) cluster <- findCluster.rma.mv(obj)
   if (missing(target)) {
     target <- NULL
@@ -51,11 +51,12 @@ vcovCR.rma.mv <- function(obj, cluster, type, target, inverse_var) {
   } else {
     if (missing(inverse_var)) inverse_var <- FALSE
   }
-  vcov_CR(obj, cluster = cluster, type = type, target = target, inverse_var = inverse_var)
+  vcov_CR(obj, cluster = cluster, type = type, 
+          target = target, inverse_var = inverse_var, form = form)
 }
 
 # coef()
-# residuals_CR()
+# residuals_CS()
 # vcov()
 # model_matrix
 
@@ -94,4 +95,24 @@ findCluster.rma.mv <- function(obj) {
     stop("No clustering variable specified.")
   }
   droplevels(as.factor(cluster))
+}
+
+#---------------------------------------
+# Get bread matrix and scaling constant
+#---------------------------------------
+
+bread.rma.mv <- function(x, ...) {
+  if (is.null(x$W)) {
+    B <- vcov(x) * nobs(x)
+  } else{
+    X_mat <- model_matrix(x)
+    XWX <- t(X_mat) %*% x$W %*% X_mat
+    B <- chol2inv(chol(XWX)) * nobs(x)
+    rownames(B) <- colnames(B) <- colnames(X_mat)
+  }
+  B
+}
+
+v_scale.rma.mv <- function(obj) {
+  nobs(obj)
 }

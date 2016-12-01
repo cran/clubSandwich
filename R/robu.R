@@ -45,18 +45,19 @@
 
 
 
-vcovCR.robu <- function(obj, cluster, type, target, inverse_var) {
+vcovCR.robu <- function(obj, cluster, type, target, inverse_var, form = "sandwich", ...) {
   if (missing(cluster)) cluster <- obj$study_orig_id
   if (missing(target)) target <- NULL
   if (missing(inverse_var)) inverse_var <- is.null(target) & (!obj$user_weighting)
-  vcov_CR(obj, cluster = cluster, type = type, target = target, inverse_var = inverse_var)
+  vcov_CR(obj, cluster = cluster, type = type, 
+          target = target, inverse_var = inverse_var, form = form)
 }
 
 #-----------------------------------------------
 # coefficients
 #-----------------------------------------------
 
-coef_CR.robu <- function(obj) {
+coef_CS.robu <- function(obj) {
   beta <- as.vector(obj$b.r)
   labs <- obj$reg_table$labels
   names(beta) <- levels(labs)[labs]
@@ -67,7 +68,7 @@ coef_CR.robu <- function(obj) {
 # residuals
 #-----------------------------------------------
 
-residuals_CR.robu <- function(obj) {
+residuals_CS.robu <- function(obj) {
   ord <- order(order(obj$study_orig_id))
   obj$data.full$e.r[ord]
 }
@@ -108,4 +109,21 @@ weightMatrix.robu <- function(obj, cluster) {
     W <- obj$data.full$r.weights[ord]
   }
   matrix_list(W, cluster, "both")
+}
+
+#---------------------------------------
+# Get bread matrix and scaling constant
+#---------------------------------------
+
+bread.robu <- function(x, ...) {
+  if (x$user_weighting) { 
+    W <- x$data.full$userweights
+  } else{
+    W <- x$data.full$r.weights
+  }
+  x$N * chol2inv(chol(crossprod(x$Xreg, W * x$Xreg)))
+}
+
+v_scale.robu <- function(obj) {
+  obj$N
 }

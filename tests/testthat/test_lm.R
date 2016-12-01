@@ -15,11 +15,22 @@ lm_fit <- lm(y ~ X1 + X2 + X3, data = dat)
 WLS_fit <- lm(y ~ X1 + X2 + X3, data = dat, weights = w)
 CR_types <- paste0("CR",0:4)
 
-# obj <- WLS_fit
-# type <- "CR2" 
+# obj <- lm_fit
+# type <- "CR2"
 # vcov <- vcovCR(obj, cluster = cluster, type = type)
 # target = NULL
 # inverse_var = FALSE
+
+test_that("bread works", {
+  
+  expect_true(check_bread(lm_fit, cluster = dat$cluster, y = dat$y))
+  lm_vcov <- bread(lm_fit) * summary(lm_fit)$sigma^2 / v_scale(lm_fit)
+  expect_equal(vcov(lm_fit), lm_vcov)
+  
+  expect_true(check_bread(WLS_fit, cluster = dat$cluster, y = dat$y))
+  wls_vcov <- bread(WLS_fit) * summary(WLS_fit)$sigma^2 / v_scale(WLS_fit)
+  expect_equal(vcov(WLS_fit), wls_vcov)
+})
 
 test_that("vcovCR options don't matter for CR0", {
   expect_error(vcovCR(lm_fit, type = "CR0"))
@@ -164,7 +175,7 @@ test_that("Order doesn't matter.",{
   
   test_fit <- lapply(CR_types, function(x) coef_test(WLS_fit, vcov = x, cluster = dat$cluster, test = "All"))
   test_scramble <- lapply(CR_types, function(x) coef_test(WLS_scramble, vcov = x, cluster = dat_scramble$cluster, test = "All"))
-  expect_equal(test_fit, test_scramble, tolerance = 10^-6)
+  expect_equal(test_fit, test_scramble, tolerance = 10^-5)
   
   constraints <- combn(length(coef(lm_fit)), 2, simplify = FALSE)
   Wald_fit <- Wald_test(WLS_fit, constraints = constraints, vcov = "CR2", cluster = dat$cluster, test = "All")

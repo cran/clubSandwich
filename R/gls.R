@@ -24,14 +24,15 @@
 #'   
 #' @export
 
-vcovCR.gls <- function(obj, cluster, type, target, inverse_var) {
+vcovCR.gls <- function(obj, cluster, type, target, inverse_var, form = "sandwich", ...) {
   if (missing(cluster)) cluster <- nlme::getGroups(obj)
   if (missing(target)) target <- NULL
   if (missing(inverse_var) ) inverse_var <- is.null(target)
-  vcov_CR(obj, cluster = cluster, type = type, target = target, inverse_var = inverse_var)
+  vcov_CR(obj, cluster = cluster, type = type, 
+          target = target, inverse_var = inverse_var, form = form)
 }
 
-# residuals_CR()
+# residuals_CS()
 # coef()
 # nobs()
 
@@ -78,8 +79,24 @@ model_matrix.gls <- function(obj) {
 
 targetVariance.gls <- function(obj, cluster) {
   groups <- nlme::getGroups(obj)
-  V <- lapply(levels(groups), function(g) nlme::getVarCov(obj, individual = g))
-  lapply(V, function(v) matrix(v, dim(v)))
+  if (is.null(obj$modelStruct$corStruct)) {
+    if (is.null(obj$modelStruct$varStruct)) {
+      V_list <- matrix_list(rep(1, length(cluster)), cluster, "both")
+    } else {
+      wts <- nlme::varWeights(obj$modelStruct$varStruct)
+      V_list <- matrix_list(1 / wts^2, cluster, "both")
+    } 
+  } else {
+    R_list <- nlme::corMatrix(obj$modelStruct$corStruct)
+    if (is.null(obj$modelStruct$varStruct)) {
+      V_list <- R_list
+    } else {
+      sd_vec <- 1 / nlme::varWeights(obj$modelStruct$varStruct)[order(order(groups))]
+      sd_list <- split(sd_vec, groups)
+      V_list <- Map(function(R, s) tcrossprod(s) * R, R = R_list, s = sd_list)
+    } 
+  } 
+  V_list
 }
 
 #-------------------------------------
@@ -90,3 +107,15 @@ weightMatrix.gls <- function(obj, cluster) {
   V_list <- targetVariance(obj, cluster)
   lapply(V_list, function(v) chol2inv(chol(v)))
 }
+
+#---------------------------------------
+# Get bread matrix and scaling constant
+#---------------------------------------
+
+#' @export
+
+bread.gls <- function(x, ...) {
+  vcov(x) * nobs(x) / x$sigma^2
+}
+
+# v_scale() is default

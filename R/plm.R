@@ -21,6 +21,9 @@
 #'   variance-covariance model used to calculate the \code{CR2} and \code{CR4} 
 #'   adjustment matrices. By default, the target is taken to be an identity
 #'   matrix for fixed effect models or the estimated compound-symmetric covariance matrix for random effects models. 
+#' @param ignore_FE Optional logical controlling whether fixed effects are
+#'   ignored when calculating small-sample adjustments in models where fixed
+#'   effects are estimated through absorption.
 #' @inheritParams vcovCR
 #'   
 #' @return An object of class \code{c("vcovCR","clubSandwich")}, which consists 
@@ -31,15 +34,37 @@
 #'   
 #' @export
 
-vcovCR.plm <- function(obj, cluster, type, target, inverse_var) {
+vcovCR.plm <- function(obj, cluster, type, target, inverse_var, form = "sandwich", ignore_FE = FALSE, ...) {
   
   if (obj$args$model=="random" & obj$args$effect=="twoways") stop("Variance matrix is not block diagonal.")
   
-  index <- attr(model.frame(obj),"index")
+  if (missing(cluster)) {
+    cluster <- findCluster.plm(obj = obj)
+  } else {
+    cluster <- findCluster.plm(obj = obj, cluster = cluster)  
+  } 
   
+  if (missing(target)) target <- NULL
+  if (missing(inverse_var)) inverse_var <- is.null(target)
+  obj$na.action <- attr(obj$model, "na.action")
+  
+  vcov_CR(obj, cluster = cluster, type = type, 
+          target = target, inverse_var = inverse_var, 
+          form = form, ignore_FE = ignore_FE)
+}
+
+get_index_order <- function(obj) {
+  envir <- environment(obj$formula)
+  mf <- match.call(plm::plm, call = obj$call, envir = envir)
+  index_names <- names(attr(model.frame(obj), "index"))
+  index <- eval(mf$data, envir)[,index_names]
+  order(index[,1],index[,2])
+}
+
+findCluster.plm <- function(obj, cluster) {
+  index <- attr(model.frame(obj),"index")
   if (missing(cluster)) {
     if (obj$args$effect=="twoways") stop("You must specify a clustering variable.")
-    index <- attr(model.frame(obj),"index")
     cluster <- switch(obj$args$effect,
                       individual = index[[1]],
                       time = index[[2]])
@@ -54,19 +79,11 @@ vcovCR.plm <- function(obj, cluster, type, target, inverse_var) {
     cluster <- cluster[sort_order]
   }
   
-  if (missing(target)) target <- NULL
-  if (missing(inverse_var)) inverse_var <- is.null(target)
-  obj$na.action <- attr(obj$model, "na.action")
+  if (obj$args$model=="fd") {
+    cluster <- cluster[index[[2]] != levels(index[[2]])[1]]
+  }
   
-  vcov_CR(obj, cluster = cluster, type = type, target = target, inverse_var = inverse_var)
-}
-
-get_index_order <- function(obj) {
-  envir <- environment(obj$formula)
-  mf <- match.call(plm::plm, call = obj$call, envir = envir)
-  index_names <- names(attr(model.frame(obj), "index"))
-  index <- eval(mf$data, envir)[,index_names]
-  order(index[,1],index[,2])
+  cluster
 }
 
 #-----------------------------------------------
@@ -77,7 +94,7 @@ model_matrix.plm <- function(obj) {
   if (obj$args$model=="random") {
     model.matrix(Formula::as.Formula(formula(obj)), model.frame(obj))  
   } else {
-    model.matrix(obj)
+    model.matrix(obj, model = obj$args$model, effect = obj$args$effect)
   }
 }
 
@@ -85,13 +102,15 @@ model_matrix.plm <- function(obj) {
 # Augmented model matrix
 #----------------------------------------------
 
-augmented_model_matrix.plm <- function(obj, cluster, inverse_var) {
+augmented_model_matrix.plm <- function(obj, cluster, inverse_var, ignore_FE) {
   index <- attr(model.frame(obj),"index")
   individual <- droplevels(as.factor(index[[1]]))
   time <- droplevels(as.factor(index[[2]]))
   effect <- obj$args$effect
   
-  if (obj$args$model=="within") {
+  if (ignore_FE) {
+    S <- NULL 
+  } else if (obj$args$model=="within") {
     if (effect=="individual") {
       if (inverse_var & identical(individual, cluster)) {
         S <- NULL
@@ -124,7 +143,7 @@ augmented_model_matrix.plm <- function(obj, cluster, inverse_var) {
 # unadjusted residuals
 #-------------------------------------
 
-residuals_CR.plm <- function(obj) {
+residuals_CS.plm <- function(obj) {
   if (obj$args$model=="random") {
     y <- plm::pmodel.response(formula(obj), model.frame(obj), model = "pooling")
     Xb <- as.numeric(model_matrix(obj) %*% coef(obj))
@@ -139,7 +158,7 @@ residuals_CR.plm <- function(obj) {
 #-------------------------------------
 
 nobs.plm <- function(object, ...) {
-  NROW(object$model)
+  length(object$residuals)
 }
 
 #-------------------------------------
@@ -149,8 +168,9 @@ nobs.plm <- function(object, ...) {
 targetVariance.plm <- function(obj, cluster) {
   if (obj$args$model=="random") {
     block_mat <- function(nj) {
-      Vj <- matrix(obj$ercomp$sigma2$id, nj, nj)
-      diag(Vj) <- obj$ercomp$sigma2$idios + obj$ercomp$sigma2$id
+      r <- with(obj$ercomp$sigma2, id / idios)
+      Vj <- matrix(r, nj, nj)
+      diag(Vj) <- 1 + r
       Vj
     }
     lapply(table(cluster), block_mat)
@@ -177,4 +197,21 @@ weightMatrix.plm <- function(obj, cluster) {
   } else {
     matrix_list(rep(1, nobs(obj)), cluster, "both")
   }
+}
+
+#---------------------------------------
+# Get bread matrix and scaling constant
+#---------------------------------------
+
+bread.plm <- function(x, ...) {
+  # if (x$args$model=="random") {
+  #   v_scale(x) * vcov(x) / x$ercomp$sigma2$idios
+  # } else {
+  #   v_scale(x) * vcov(x) / with(x, sum(residuals^2) / df.residual) 
+  # }
+  v_scale(x) * vcov(x) / with(x, sum(residuals^2) / df.residual)
+}
+
+v_scale.plm <- function(obj) {
+  max(sapply(attr(obj$model, "index"), nlevels))
 }

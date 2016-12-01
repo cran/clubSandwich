@@ -95,25 +95,41 @@ test_that("two-way effects agree with lm", {
   
 })
 
+test_that("bread works", {
+  y <- plm_individual$model$"log(gsp)"
+  expect_true(check_bread(plm_individual, cluster = findCluster.plm(plm_individual), y = y))
+  sigma_sq_ind <- with(plm_individual, sum(residuals^2) / df.residual) 
+  expect_equal(vcov(plm_individual), bread(plm_individual) * sigma_sq_ind / v_scale(plm_individual))
+  
+  expect_true(check_bread(plm_time, cluster = findCluster.plm(plm_time), y = y))
+  sigma_sq_time <- with(plm_time, sum(residuals^2) / df.residual) 
+  expect_equal(vcov(plm_time), bread(plm_time) * sigma_sq_time / v_scale(plm_time))
+  
+  expect_true(check_bread(plm_twoways, cluster = findCluster.plm(plm_twoways, "state"), y = y))
+  expect_true(check_bread(plm_twoways, cluster = findCluster.plm(plm_twoways, "year"), y = y))
+  sigma_sq_two <- with(plm_twoways, sum(residuals^2) / df.residual) 
+  expect_equal(vcov(plm_twoways), bread(plm_twoways) * sigma_sq_two / v_scale(plm_twoways))
+})
+
 test_that("CR0 and CR1S agree with arellano vcov", {
   expect_equal(vcovHC(plm_individual, method="arellano", type = "HC0", cluster = "group"), 
-               as.matrix(vcovCR(plm_individual, type = "CR0")))
+               as.matrix(vcovCR(plm_individual, type = "CR0")), check.attributes = FALSE)
   expect_equal(vcovHC(plm_individual, method="arellano", type = "sss", cluster = "group"), 
-               as.matrix(vcovCR(plm_individual, type = "CR1S")))
+               as.matrix(vcovCR(plm_individual, type = "CR1S")), check.attributes = FALSE)
   
   expect_equal(vcovHC(plm_time, method="arellano", type = "HC0", cluster = "time"), 
-               as.matrix(vcovCR(plm_time, type = "CR0")))
+               as.matrix(vcovCR(plm_time, type = "CR0")), check.attributes = FALSE)
   expect_equal(vcovHC(plm_time, method="arellano", type = "sss", cluster = "time"), 
-               as.matrix(vcovCR(plm_time, type = "CR1S")))
+               as.matrix(vcovCR(plm_time, type = "CR1S")), check.attributes = FALSE)
   
   expect_equal(vcovHC(plm_twoways, method="arellano", type = "HC0", cluster = "group"), 
-               as.matrix(vcovCR(plm_twoways, cluster = "individual", type = "CR0")))
+               as.matrix(vcovCR(plm_twoways, cluster = "individual", type = "CR0")), check.attributes = FALSE)
   expect_equal(vcovHC(plm_twoways, method="arellano", type = "sss", cluster = "group"), 
-               as.matrix(vcovCR(plm_twoways, cluster = "individual", type = "CR1S")))
+               as.matrix(vcovCR(plm_twoways, cluster = "individual", type = "CR1S")), check.attributes = FALSE)
   expect_equal(vcovHC(plm_twoways, method="arellano", type = "HC0", cluster = "time"), 
-               as.matrix(vcovCR(plm_twoways, cluster = "time", type = "CR0")))
+               as.matrix(vcovCR(plm_twoways, cluster = "time", type = "CR0")), check.attributes = FALSE)
   expect_equal(vcovHC(plm_twoways, method="arellano", type = "sss", cluster = "time"), 
-               as.matrix(vcovCR(plm_twoways, cluster = "time", type = "CR1S")))
+               as.matrix(vcovCR(plm_twoways, cluster = "time", type = "CR1S")), check.attributes = FALSE)
 })
 
 test_that("vcovCR options work for CR2", {
@@ -122,7 +138,7 @@ test_that("vcovCR options work for CR2", {
   expect_identical(vcovCR(plm_individual, type = "CR2", inverse_var = TRUE), CR2_iv)
   
   expect_identical(vcovCR(plm_individual, type = "CR2", 
-                          target = rep(1, nrow(plm_individual$model)), 
+                          target = rep(1, n_obs), 
                           inverse_var = TRUE), CR2_iv)
   
   CR2_not <- vcovCR(plm_individual, type = "CR2", inverse_var = FALSE)
@@ -193,33 +209,3 @@ test_that("vcovCR is equivalent to vcovHC when clusters are all of size 1", {
   expect_equal(CR_twoways, HC_twoways)
 })
 
-
-
-#-------------------------------------
-# MLDA example
-#-------------------------------------
-
-# deaths <- read.dta("paper_ClusterRobustTesting/data/deaths.dta") 
-# 
-# filter(deaths, agegr=="18-20 yrs" & year <= 1983 & dtype == "MVA" & !is.na(beertaxa)) %>%
-#   select(-agegr, -dtype) %>%
-#   group_by(state) %>%
-#   mutate(legal_s = legal - mean(legal),
-#          beertaxa_s = beertaxa - mean(beertaxa)) %>%
-#   as.data.frame() ->
-#   death_dat
-# 
-# death_dat$mrate_miss <- death_dat$mrate
-# death_dat$mrate_miss[sample(nrow(death_dat), size = 100)] <- NA
-# 
-# var_names <- c("legal","beertaxa")
-# lm_fit <- lm(mrate_miss ~ 0 + legal + beertaxa + factor(state) + factor(year), data = death_dat)
-# CR2_iv_lm <- vcovCR(lm_fit, cluster = death_dat$state, type = "CR2")
-# CR2_iv_lm[var_names, var_names]
-# vcovCR(lm_fit, cluster = death_dat$state, type = "CR2", inverse_var = FALSE)[var_names, var_names]
-# plm_fit <- plm(mrate_miss ~ legal + beertaxa, data = death_dat, 
-#                index = c("state", "year"), effect = "twoways", model = "within")
-# coef(lm_fit)[var_names]
-# coef(plm_fit)
-# vcovCR(plm_fit, cluster = "individual", type = "CR2")
-# vcovCR(plm_fit, cluster = death_dat$state, type = "CR2", inverse_var = FALSE)
