@@ -31,7 +31,37 @@
 #'   regression coefficient estimates.
 #'   
 #' @seealso \code{\link{vcovCR}}
-#'   
+#' 
+#' @examples 
+#' 
+#' library(plm)
+#' # fixed effects
+#' data("Produc", package = "plm")
+#' plm_FE <- plm(log(gsp) ~ log(pcap) + log(pc) + log(emp) + unemp, 
+#'               data = Produc, index = c("state","year"), 
+#'               effect = "individual", model = "within")  
+#' vcovCR(plm_FE, type="CR2")
+#' 
+#' # random effects
+#' plm_RE <- update(plm_FE, model = "random")
+#' vcovCR(plm_RE, type = "CR2")
+#' 
+#' # first differencing
+#' data(Fatalities, package = "AER")
+#' Fatalities <- within(Fatalities, {
+#'   frate <- 10000 * fatal / pop
+#'   drinkagec <- cut(drinkage, breaks = 18:22, include.lowest = TRUE, right = FALSE)
+#'   drinkagec <- relevel(drinkagec, ref = 4)
+#' })
+#' 
+#' plm_FD <- plm(frate ~ beertax + drinkagec + miles + unemp + log(income), 
+#'               data = Fatalities, index = c("state", "year"), 
+#'               model = "fd")
+#' vcovHC(plm_FD, method="arellano", type = "sss", cluster = "group")
+#' vcovCR(plm_FD, type = "CR1S")
+#' vcovCR(plm_FD, type = "CR2")
+#' 
+#' 
 #' @export
 
 vcovCR.plm <- function(obj, cluster, type, target, inverse_var, form = "sandwich", ignore_FE = FALSE, ...) {
@@ -168,7 +198,9 @@ nobs.plm <- function(object, ...) {
 targetVariance.plm <- function(obj, cluster) {
   if (obj$args$model=="random") {
     block_mat <- function(nj) {
-      r <- with(obj$ercomp$sigma2, id / idios)
+      sigma_sq <- obj$ercomp$sigma2[[1]]
+      tau_sq <- obj$ercomp$sigma2[[2]]
+      r <- tau_sq / sigma_sq
       Vj <- matrix(r, nj, nj)
       diag(Vj) <- 1 + r
       Vj
@@ -185,8 +217,8 @@ targetVariance.plm <- function(obj, cluster) {
 
 weightMatrix.plm <- function(obj, cluster) {
   if (obj$args$model=="random") {
-    sigma_sq <- obj$ercomp$sigma2$idios
-    tau_sq <- obj$ercomp$sigma2$id
+    sigma_sq <- obj$ercomp$sigma2[[1]]
+    tau_sq <- obj$ercomp$sigma2[[2]]
     block_mat <- function(nj) {
       theta <- tau_sq / ((nj * tau_sq + sigma_sq))
       Wj <- matrix(-theta, nj, nj)

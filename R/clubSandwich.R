@@ -7,12 +7,14 @@
 #' \code{vcovCR} returns a sandwich estimate of the variance-covariance matrix 
 #' of a set of regression coefficient estimates.
 #' 
-#' @param obj Fitted model for which to calcualte the variance-covariance matrix
+#' @param obj Fitted model for which to calculate the variance-covariance matrix
 #' @param cluster Expression or vector indicating which observations belong to 
 #'   the same cluster. For some classes, the cluster will be detected 
 #'   automatically if not specified.
 #' @param type Character string specifying which small-sample adjustment should 
-#'   be used.
+#'   be used, with available options \code{"CR0"}, \code{"CR1"}, \code{"CR1S"}, 
+#'   \code{"CR2"}, or \code{"CR3"}. See "Details" section of
+#'   \code{\link{vcovCR}} for further information.
 #' @param target Optional matrix or vector describing the working 
 #'   variance-covariance model used to calculate the \code{CR2} and \code{CR4} 
 #'   adjustment matrices. If a vector, the target matrix is assumed to be 
@@ -29,10 +31,44 @@
 #' @param ... Additional arguments available for some classes of objects.
 #'   
 #' @description This is a generic function, with specific methods defined for 
-#'   \code{\link[stats]{lm}}, \code{\link[plm]{plm}}, \code{\link[nlme]{gls}}, 
-#'   \code{\link[nlme]{lme}}, \code{\link[robumeta]{robu}}, 
+#'   \code{\link[stats]{lm}}, \code{\link[plm]{plm}}, \code{\link[stats]{glm}}, 
+#'   \code{\link[nlme]{gls}}, \code{\link[nlme]{lme}}, \code{\link[robumeta]{robu}}, 
 #'   \code{\link[metafor]{rma.uni}}, and \code{\link[metafor]{rma.mv}} objects.
 #'   
+#' @details Several different small sample corrections are available, which run 
+#'   parallel with the "HC" corrections for heteroskedasticity-consistent 
+#'   variance estimators, as implemented in \code{\link[sandwich]{vcovHC}}. 
+#'   The "CR2" adjustment is recommended (Pustejovsky & Tipton, 2017; 
+#'   Imbens & Kolesar, 2016).
+#'   See Pustejovsky and Tipton (2017) and Cameron and Miller (2015) for further 
+#'   technical details. Available options include: 
+#'   \describe{ 
+#'   \item{"CR0"}{is the original form of the sandwich estimator 
+#'   (Liang & Zeger, 1986), which does not make any small-sample correction.} 
+#'   \item{"CR1"}{multiplies CR0 by \code{m / (m - 1)}, where \code{m} is the
+#'   number of clusters.} 
+#'   \item{"CR1S"}{multiplies CR0 by \code{(m N) / [(m -
+#'   1)(N - p)]}, where \code{m} is the number of clusters, \code{N} is the
+#'   total number of observations, and \code{p} is the number of covariates.
+#'   Some Stata commands use this correction by default.} 
+#'   \item{"CR2"}{is the "bias-reduced linearization" adjustment proposed by 
+#'   Bell and McCaffrey (2002) and further developed in Pustejovsky and
+#'   Tipton (2017). The adjustment is chosen so that the variance-covariance 
+#'   estimator is exactly unbiased under a user-specified working model.}
+#'   \item{"CR3"}{approximates the leave-one-cluster-out jackknife variance estimator (Bell & MCCaffery, 2002).}
+#'   }
+#'   
+#' @references 
+#' Bell, R. M., & McCaffrey, D. F. (2002). Bias reduction in standard errors for linear regression with multi-stage samples. Survey Methodology, 28(2), 169-181.
+#' 
+#' Cameron, A. C., & Miller, D. L. (2015). A Practitioner's Guide to Cluster-Robust Inference. \emph{Journal of Human Resources, 50}(2), 317-372. \doi{10.3368/jhr.50.2.317}
+#' 
+#' Imbens, G. W., & Kolesar, M. (2016). Robust standard errors in small samples: Some practical advice. \emph{Review of Economics and Statistics, 98}(4), 701-712. \doi{10.1162/rest_a_00552}
+#' 
+#' Liang, K.-Y., & Zeger, S. L. (1986). Longitudinal data analysis using generalized linear models. \emph{Biometrika, 73}(1), 13-22. \doi{10.1093/biomet/73.1.13}
+#' 
+#' Pustejovsky, J. E. & Tipton, E. (2017). Small sample methods for cluster-robust variance estimation and hypothesis testing in fixed effects models. \emph{Journal of Business and Economic Statistics}. In Press. \doi{10.1080/07350015.2016.1247004}
+#' 
 #' @return An object of class \code{c("vcovCR","clubSandwich")}, which consists 
 #'   of a matrix of the estimated variance of and covariances between the 
 #'   regression coefficient estimates. The matrix has several attributes: 
@@ -47,10 +83,34 @@
 #'   is needed for calculating small-sample corrections for Wald tests.} }
 #'   
 #' @seealso \code{\link{vcovCR.lm}}, \code{\link{vcovCR.plm}}, 
-#'   \code{\link{vcovCR.gls}}, \code{\link{vcovCR.lme}}, 
+#'   \code{\link{vcovCR.glm}}, \code{\link{vcovCR.gls}}, \code{\link{vcovCR.lme}}, 
 #'   \code{\link{vcovCR.robu}}, \code{\link{vcovCR.rma.uni}}, 
 #'   \code{\link{vcovCR.rma.mv}}
-#'   
+#' 
+#' @examples 
+#' 
+#' # simulate design with cluster-dependence
+#' m <- 8
+#' cluster <- factor(rep(LETTERS[1:m], 3 + rpois(m, 5)))
+#' n <- length(cluster)
+#' X <- matrix(rnorm(3 * n), n, 3)
+#' nu <- rnorm(m)[cluster]
+#' e <- rnorm(n)
+#' y <- X %*% c(.4, .3, -.3) + nu + e
+#' dat <- data.frame(y, X, cluster, row = 1:n)
+#' 
+#' # fit linear model
+#' lm_fit <- lm(y ~ X1 + X2 + X3, data = dat)
+#' vcov(lm_fit)
+#' 
+#' # cluster-robust variance estimator with CR2 small-sample correction
+#' vcovCR(lm_fit, cluster = dat$cluster, type = "CR2")
+#' 
+#' # compare small-sample adjustments
+#' CR_types <- paste0("CR",c("0","1","1S","2","3"))
+#' sapply(CR_types, function(type) 
+#'        sqrt(diag(vcovCR(lm_fit, cluster = dat$cluster, type = type))))
+#' 
 #' @export
 #' @import stats
 
@@ -134,15 +194,15 @@ vcov_CR <- function(obj, cluster, type, target = NULL, inverse_var = FALSE, form
       rm(S)
       U_list <- Xp_list
       UW_list <- XpW_list
-      M_U <- bread(obj) / v_scale(obj)
     } else {
       U <- cbind(Xp, S)
       rm(S)
       U_list <- matrix_list(U, cluster, "row")
       UW_list <- Map(function(u, w) as.matrix(t(u) %*% w), u = U_list, w = W_list)
-      UWU_list <- Map(function(uw, u) uw %*% u, uw = UW_list, u = U_list)
-      M_U <- matrix_power(Reduce("+",UWU_list), p = -1)
     }
+
+    UWU_list <- Map(function(uw, u) uw %*% u, uw = UW_list, u = U_list)
+    M_U <- matrix_power(Reduce("+",UWU_list), p = -1)
   }
   
   adjustments <- do.call(type, args = mget(names(formals(type))))
@@ -155,7 +215,10 @@ vcov_CR <- function(obj, cluster, type, target = NULL, inverse_var = FALSE, form
   components <- do.call(cbind, Map(function(e, r) e %*% r, e = E_list, r = res_list))
   
   v_scale <- v_scale(obj)
-  meat <- tcrossprod(components) / v_scale
+  w_scale <- attr(W_list, "w_scale")
+  if (is.null(w_scale)) w_scale <- 1L
+  
+  meat <- tcrossprod(components) * w_scale^2 / v_scale
   
   if (form == "sandwich") {
     bread <- sandwich::bread(obj)

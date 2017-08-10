@@ -59,6 +59,14 @@ vcovCR.rma.uni <- function(obj, cluster, type, target, inverse_var, form = "sand
 # vcov()
 # model_matrix()
 
+# na.action
+
+na.action.rma <- function(object, ...) {
+  res <- which(!object$not.na)
+  class(res) <- "omit"
+  res
+}
+
 #-------------------------------------
 # Get (model-based) working variance matrix 
 #-------------------------------------
@@ -81,7 +89,12 @@ weightMatrix.rma.uni <- function(obj, cluster) {
   } else {
     wi <- rep(1, obj$k)
   }
-  matrix_list(wi, cluster, "both")
+  w_scale <- mean(wi)
+  wi <- wi / w_scale
+  
+  W_list <- matrix_list(wi, cluster, "both")
+  attr(W_list, "w_scale") <- w_scale
+  W_list
 }
 
 #---------------------------------------

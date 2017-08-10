@@ -83,8 +83,8 @@ test_that("getData works.", {
   egg_scramble <- Ovary[re_order,]
   gls_scramble <- gls(follicles ~ sin(2*pi*Time) + cos(2*pi*Time), 
                       data = egg_scramble)
-  dat <- getData(gls_scramble)
-  expect_identical(egg_scramble, dat)
+  scramble_dat <- getData(gls_scramble)
+  expect_identical(egg_scramble, scramble_dat)
 })
 
 
@@ -127,7 +127,29 @@ test_that("clubSandwich works with dropped observations", {
   expect_identical(test_drop, test_complete)
 })
 
-
-test_that("CR2 is equivalent to Welch t-test for DiD design", {
+test_that("Possible to cluster at higher level than random effects", {
+  
+  # create higher level
+  pair_id <- rep(1:nlevels(Ovary$Mare), each = 3, length.out = nlevels(Ovary$Mare))[Ovary$Mare]
+  
+  re_order <- sample(nrow(Ovary))
+  dat_scramble <- Ovary[re_order,]
+  pair_scramble <- pair_id[re_order]
+  
+  # cluster at higher level
+  expect_is(vcovCR(lm_hom, type = "CR2", cluster = pair_id), "vcovCR")
+  expect_is(vcovCR(lm_power, type = "CR2", cluster = pair_id), "vcovCR")
+  expect_is(vcovCR(lm_AR1, type = "CR2", cluster = pair_id), "vcovCR")
+  V <- vcovCR(lm_AR1_power, type = "CR2", cluster = pair_id)
+  expect_is(V, "vcovCR")
+  
+  expect_error(vcovCR(lm_AR1, type = "CR2", cluster = pair_scramble))
+  expect_error(vcovCR(lm_AR1_power, type = "CR2", cluster = pair_scramble))
+  
+  # check that result does not depend on sort-order
+  V_scramble <- vcovCR(update(lm_AR1_power, data = dat_scramble), 
+                       type = "CR2", cluster = pair_scramble)
+  expect_equal(as.matrix(V), as.matrix(V_scramble), tol = 5 * 10^-7)
 })
+
 

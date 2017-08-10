@@ -9,8 +9,6 @@ obj_A3 <- update(obj_A, correlation = corExp(form = ~ Time))
 obj_A4 <- update(obj_A2, correlation = corExp(form = ~ Time))
 obj_B <- lme(distance ~ age, random = ~ age, data = Orthodont)
 
-obj <- obj_A2
-
 test_that("bread works", {
   expect_true(check_bread(obj_A, cluster = BodyWeight$Rat, y = BodyWeight$weight))
   expect_true(check_bread(obj_A2, cluster = BodyWeight$Rat, y = BodyWeight$weight, tol = 5 * 10^-5))
@@ -145,22 +143,19 @@ test_that("lme agrees with gls", {
   
   CR_lme <- lapply(CR_types, function(x) vcovCR(lme_fit, type = x))
   CR_gls <- lapply(CR_types, function(x) vcovCR(gls_fit, type = x))
-  expect_equivalent(CR_lme, CR_gls)
+  max_ratio <- mapply(function(a, b) max(abs(a / b - 1)), CR_lme, CR_gls)
+  expect_true(all(max_ratio < 10^-8))
   
   test_lme <- lapply(CR_types, function(x) coef_test(lme_fit, vcov = x, test = "All"))
   test_gls <- lapply(CR_types, function(x) coef_test(gls_fit, vcov = x, test = "All"))
-  expect_equal(test_lme, test_gls, tolerance = 10^-6)
+  compare_tests <- mapply(function(a, b) max(abs(a / b - 1), na.rm = TRUE), test_lme, test_gls)
+  expect_true(all(compare_tests < 10^-8))
   
   constraints <- c(combn(length(coef(lme_fit)), 2, simplify = FALSE),
                    combn(length(coef(lme_fit)), 3, simplify = FALSE))
   Wald_lme <- Wald_test(lme_fit, constraints = constraints, vcov = "CR2", test = "All")
   Wald_gls <- Wald_test(gls_fit, constraints = constraints, vcov = "CR2", test = "All")
   expect_equal(Wald_lme, Wald_gls)
-})
-
-
-test_that("CR2 is equivalent to Welch t-test for DiD design", {
-  
 })
 
 
@@ -186,4 +181,39 @@ test_that("Emply levels are dropped in model_matrix", {
   X <- model_matrix(lme_fit)
   expect_identical(names(betas), colnames(X))
   
+})
+
+
+
+test_that("Possible to cluster at higher level than random effects", {
+  
+  n_districts <- 10
+  n_schools_per <- rnbinom(n_districts, size = 4, prob = 0.3)
+  n_schools <- sum(n_schools_per)
+  n_students_per <- 10
+  n_students <- n_schools * n_students_per
+  
+  # identifiers for each level
+  district_id <- factor(rep(1:n_districts, n_schools_per * n_students_per))
+  school_id <- factor(rep(1:sum(n_schools_per), each = n_students_per))
+  student_id <- 1:n_students
+  
+  # simulated outcome
+  Y <- rnorm(n_districts)[district_id] + rnorm(n_schools)[school_id] + rnorm(n_students)
+  X <- rnorm(n_students)
+  dat <- data.frame(district_id, school_id, student_id, Y, X)
+  dat_scramble <- dat[sample(nrow(dat)),]
+  
+  # fit two-level model
+  lme_2level <- lme(Y ~ X, random = ~ 1 | school_id, data = dat)
+  
+  # cluster at level 3
+  V <- vcovCR(lme_2level, type = "CR2", cluster = dat$district_id)
+  expect_is(V, "vcovCR")
+  expect_error(vcovCR(lme_2level, type = "CR2", cluster = dat_scramble$district_id))
+  
+  # check that result does not depend on sort-order
+  V_scramble <- vcovCR(lme(Y ~ X, random = ~ 1 | school_id, data = dat_scramble), 
+                       type = "CR2", cluster = dat_scramble$district_id)
+  expect_equal(as.matrix(V), as.matrix(V_scramble))
 })

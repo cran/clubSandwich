@@ -151,11 +151,11 @@ test_that("Order doesn't matter.", {
   
   CR_fit <- lapply(CR_types, function(x) vcovCR(obj, type = x))
   CR_scramble <- lapply(CR_types, function(x) vcovCR(obj_scramble, type = x))
-  expect_equal(lapply(CR_fit, as.matrix), lapply(CR_scramble, as.matrix), tol = 10^-5)
+  expect_equal(lapply(CR_fit, as.matrix), lapply(CR_scramble, as.matrix), tol = 5 * 10^-5)
 
   test_fit <- lapply(CR_fit, function(x) coef_test(obj, vcov = x, test = "All"))
   test_scramble <- lapply(CR_scramble, function(x) coef_test(obj_scramble, vcov = x, test = "All"))
-  expect_equal(test_fit, test_scramble, tol = 4 * 10^-5)
+  expect_equal(test_fit, test_scramble, tol = 4 * 10^-4)
 
   constraints <- combn(length(coef(obj)), 2, simplify = FALSE)[10:16]
   Wald_fit <- Wald_test(obj, constraints = constraints, vcov = "CR2", test = "All")
@@ -186,3 +186,26 @@ test_that("clubSandwich works with dropped observations", {
   # expect_identical(test_drop, test_complete)
 })
 
+
+test_that("Possible to cluster at higher level than random effects", {
+  
+  # fit two-level model
+  obj_2level <- lme(math ~ year * size + female + black + hispanic,
+                    random = ~ year | childid,
+                    data = egsingle)
+  
+  # cluster at level 3
+  V <- vcovCR(obj_2level, type = "CR2", cluster = egsingle$schoolid)
+  expect_is(V, "vcovCR")
+  
+  # create 4th level
+  n_districts <- nlevels(egsingle$schoolid) / 3
+  districtid <- rep(1:n_districts, each = 3)[egsingle$schoolid]
+  
+  # cluster at level 4
+  expect_is(vcovCR(obj_2level, type = "CR2", cluster = districtid), "vcovCR")
+  expect_is(vcovCR(obj_A1, type = "CR2", cluster = districtid), "vcovCR")
+  expect_is(vcovCR(obj_A2, type = "CR2", cluster = districtid), "vcovCR")
+  expect_is(vcovCR(obj_A3, type = "CR2", cluster = districtid), "vcovCR")
+  expect_is(vcovCR(obj_A4, type = "CR2", cluster = districtid), "vcovCR")
+})

@@ -16,9 +16,16 @@ weightMatrix <- function(obj, cluster) UseMethod("weightMatrix")
 
 weightMatrix.default <- function(obj, cluster) {
   weights <- weights(obj)
-  if (is.null(weights)) weights <- 1
+  if (is.null(weights)) {
+    weights <- w_scale <- 1
+  } else {
+    w_scale <- mean(weights)
+    weights <- weights / w_scale
+  }
   W <- rep(weights, length.out = nobs(obj))
-  matrix_list(W, cluster, "both")
+  W_list <- matrix_list(W, cluster, "both")
+  attr(W_list, "w_scale") <- w_scale
+  W_list
 }
 
 #----------------------------------------------
