@@ -15,8 +15,8 @@ belong to the same cluster. If not specified, will be set to the
 \code{studynum} used in fitting the \code{\link[robumeta]{robu}} object.}
 
 \item{type}{Character string specifying which small-sample adjustment should 
-be used, with available options \code{"CR0"}, \code{"CR1"}, \code{"CR1S"}, 
-\code{"CR2"}, or \code{"CR3"}. See "Details" section of
+be used, with available options \code{"CR0"}, \code{"CR1"}, \code{"CR1p"},
+\code{"CR1S"}, \code{"CR2"}, or \code{"CR3"}. See "Details" section of 
 \code{\link{vcovCR}} for further information.}
 
 \item{target}{Optional matrix or vector describing the working 
@@ -68,4 +68,3 @@ Wald_test(robu_fit, constraints = 2:5, vcov = robu_CR2)
 \seealso{
 \code{\link{vcovCR}}
 }
-

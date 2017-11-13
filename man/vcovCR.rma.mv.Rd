@@ -16,8 +16,8 @@ the random-effects structure with the fewest distinct levels. Caveat
 emptor: the function does not check that the random effects are nested.}
 
 \item{type}{Character string specifying which small-sample adjustment should 
-be used, with available options \code{"CR0"}, \code{"CR1"}, \code{"CR1S"}, 
-\code{"CR2"}, or \code{"CR3"}. See "Details" section of
+be used, with available options \code{"CR0"}, \code{"CR1"}, \code{"CR1p"},
+\code{"CR1S"}, \code{"CR2"}, or \code{"CR3"}. See "Details" section of 
 \code{\link{vcovCR}} for further information.}
 
 \item{target}{Optional matrix or vector describing the working 
@@ -67,4 +67,3 @@ Wald_test(mfor_fit, constraints = 2:5, vcov = mfor_CR2)
 \seealso{
 \code{\link{vcovCR}}
 }
-

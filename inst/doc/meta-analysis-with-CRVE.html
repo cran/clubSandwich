@@ -12,7 +12,7 @@
 
 <meta name="author" content="James E. Pustejovsky" />
 
-<meta name="date" content="2017-08-10" />
+<meta name="date" content="2017-11-12" />
 
 <title>Meta-analysis with cluster-robust variance estimation</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Meta-analysis with cluster-robust variance estimation</h1>
 <h4 class="author"><em>James E. Pustejovsky</em></h4>
-<h4 class="date"><em>2017-08-10</em></h4>
+<h4 class="date"><em>2017-11-12</em></h4>
 
 
 
@@ -83,16 +83,16 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <span class="kw">data</span>(dropoutPrevention)
 
 <span class="co"># clean formatting</span>
-<span class="kw">names</span>(dropoutPrevention)[<span class="dv">7</span>:<span class="dv">8</span>] &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;eval&quot;</span>,<span class="st">&quot;implement&quot;</span>)
-<span class="kw">levels</span>(dropoutPrevention$eval) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;independent&quot;</span>,<span class="st">&quot;indirect&quot;</span>,<span class="st">&quot;planning&quot;</span>,<span class="st">&quot;delivery&quot;</span>)
-<span class="kw">levels</span>(dropoutPrevention$implement) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;low&quot;</span>,<span class="st">&quot;medium&quot;</span>,<span class="st">&quot;high&quot;</span>)
-<span class="kw">levels</span>(dropoutPrevention$program_site) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;community&quot;</span>,<span class="st">&quot;mixed&quot;</span>,<span class="st">&quot;classroom&quot;</span>,<span class="st">&quot;school&quot;</span>)
-<span class="kw">levels</span>(dropoutPrevention$study_design) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;matched&quot;</span>,<span class="st">&quot;unmatched&quot;</span>,<span class="st">&quot;RCT&quot;</span>)
-<span class="kw">levels</span>(dropoutPrevention$adjusted) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;no&quot;</span>,<span class="st">&quot;yes&quot;</span>)
+<span class="kw">names</span>(dropoutPrevention)[<span class="dv">7</span><span class="op">:</span><span class="dv">8</span>] &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;eval&quot;</span>,<span class="st">&quot;implement&quot;</span>)
+<span class="kw">levels</span>(dropoutPrevention<span class="op">$</span>eval) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;independent&quot;</span>,<span class="st">&quot;indirect&quot;</span>,<span class="st">&quot;planning&quot;</span>,<span class="st">&quot;delivery&quot;</span>)
+<span class="kw">levels</span>(dropoutPrevention<span class="op">$</span>implement) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;low&quot;</span>,<span class="st">&quot;medium&quot;</span>,<span class="st">&quot;high&quot;</span>)
+<span class="kw">levels</span>(dropoutPrevention<span class="op">$</span>program_site) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;community&quot;</span>,<span class="st">&quot;mixed&quot;</span>,<span class="st">&quot;classroom&quot;</span>,<span class="st">&quot;school&quot;</span>)
+<span class="kw">levels</span>(dropoutPrevention<span class="op">$</span>study_design) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;matched&quot;</span>,<span class="st">&quot;unmatched&quot;</span>,<span class="st">&quot;RCT&quot;</span>)
+<span class="kw">levels</span>(dropoutPrevention<span class="op">$</span>adjusted) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;no&quot;</span>,<span class="st">&quot;yes&quot;</span>)
 
-m3_robu &lt;-<span class="st"> </span><span class="kw">robu</span>(LOR1 ~<span class="st"> </span>study_design +<span class="st"> </span>attrition +<span class="st"> </span>group_equivalence +<span class="st"> </span>adjusted
-                +<span class="st"> </span>outcome +<span class="st"> </span>eval +<span class="st"> </span>male_pct +<span class="st"> </span>white_pct +<span class="st"> </span>average_age
-                +<span class="st"> </span>implement +<span class="st"> </span>program_site +<span class="st"> </span>duration +<span class="st"> </span>service_hrs, 
+m3_robu &lt;-<span class="st"> </span><span class="kw">robu</span>(LOR1 <span class="op">~</span><span class="st"> </span>study_design <span class="op">+</span><span class="st"> </span>attrition <span class="op">+</span><span class="st"> </span>group_equivalence <span class="op">+</span><span class="st"> </span>adjusted
+                <span class="op">+</span><span class="st"> </span>outcome <span class="op">+</span><span class="st"> </span>eval <span class="op">+</span><span class="st"> </span>male_pct <span class="op">+</span><span class="st"> </span>white_pct <span class="op">+</span><span class="st"> </span>average_age
+                <span class="op">+</span><span class="st"> </span>implement <span class="op">+</span><span class="st"> </span>program_site <span class="op">+</span><span class="st"> </span>duration <span class="op">+</span><span class="st"> </span>service_hrs, 
                 <span class="dt">data =</span> dropoutPrevention, <span class="dt">studynum =</span> studyID, <span class="dt">var.eff.size =</span> varLOR, 
                 <span class="dt">modelweights =</span> <span class="st">&quot;HIER&quot;</span>)
 <span class="kw">print</span>(m3_robu)</code></pre></div>
@@ -133,11 +133,11 @@ m3_robu &lt;-<span class="st"> </span><span class="kw">robu</span>(LOR1 ~<span c
 ## ---
 ## Note: If df &lt; 4, do not trust the results</code></pre>
 <p>Note that <code>robumeta</code> produces small-sample corrected standard errors and t-tests, and so there is no need to repeat those calculations with <code>clubSandwich</code>. The <code>eval</code> variable has four levels, and it might be of interest to test whether the average program effects differ by the degree of evaluator independence. The null hypothesis in this case is that the 10th, 11th, and 12th regression coefficients are all equal to zero. A small-sample adjusted F-test for this hypothesis can be obtained as follows. The <code>vcov = &quot;CR2&quot;</code> option means that the standard errors will be corrected using the bias-reduced linearization estimator described in Tipton and Pustejovsky (2015).</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">Wald_test</span>(m3_robu, <span class="dt">constraints =</span> <span class="dv">10</span>:<span class="dv">12</span>, <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">Wald_test</span>(m3_robu, <span class="dt">constraints =</span> <span class="dv">10</span><span class="op">:</span><span class="dv">12</span>, <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</code></pre></div>
 <pre><code>##  Test    F d.f.  p.val
 ##   HTZ 2.78 16.8 0.0732</code></pre>
 <p>By default, the <code>Wald_test</code> function provides an F-type test with degrees of freedom estimated using the approximate Hotelling’s <span class="math inline">\(T^2_Z\)</span> method. The test has less than 17 degrees of freedom, even though there are 152 independent studies in the data, and has a p-value that is not quite significant at conventional levels. The low degrees of freedom are a consequence of the fact that one of the levels of <code>evaluator independence</code> has only a few effect sizes in it:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">table</span>(dropoutPrevention$eval)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">table</span>(dropoutPrevention<span class="op">$</span>eval)</code></pre></div>
 <pre><code>## 
 ## independent    indirect    planning    delivery 
 ##           6          33          43         303</code></pre>
@@ -146,11 +146,11 @@ m3_robu &lt;-<span class="st"> </span><span class="kw">robu</span>(LOR1 ~<span c
 <h2>metafor model</h2>
 <p><code>clubSandwich</code> also works with models fit using the <code>metafor</code> package. Here we re-fit the same regression specification, but use REML to estimate the variance components (<code>robumeta</code> uses a method-of-moments estimator), as well as a somewhat different weighting scheme than that used in <code>robumeta</code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(metafor)
-m3_metafor &lt;-<span class="st"> </span><span class="kw">rma.mv</span>(LOR1 ~<span class="st"> </span>study_design +<span class="st"> </span>attrition +<span class="st"> </span>group_equivalence +<span class="st"> </span>adjusted
-                      +<span class="st"> </span>outcome +<span class="st"> </span>eval
-                      +<span class="st"> </span>male_pct +<span class="st"> </span>white_pct +<span class="st"> </span>average_age
-                      +<span class="st"> </span>implement +<span class="st"> </span>program_site +<span class="st"> </span>duration +<span class="st"> </span>service_hrs, 
-                      <span class="dt">V =</span> varLOR, <span class="dt">random =</span> <span class="kw">list</span>(~<span class="st"> </span><span class="dv">1</span> |<span class="st"> </span>studyID, ~<span class="st"> </span><span class="dv">1</span> |<span class="st"> </span>studySample),
+m3_metafor &lt;-<span class="st"> </span><span class="kw">rma.mv</span>(LOR1 <span class="op">~</span><span class="st"> </span>study_design <span class="op">+</span><span class="st"> </span>attrition <span class="op">+</span><span class="st"> </span>group_equivalence <span class="op">+</span><span class="st"> </span>adjusted
+                      <span class="op">+</span><span class="st"> </span>outcome <span class="op">+</span><span class="st"> </span>eval
+                      <span class="op">+</span><span class="st"> </span>male_pct <span class="op">+</span><span class="st"> </span>white_pct <span class="op">+</span><span class="st"> </span>average_age
+                      <span class="op">+</span><span class="st"> </span>implement <span class="op">+</span><span class="st"> </span>program_site <span class="op">+</span><span class="st"> </span>duration <span class="op">+</span><span class="st"> </span>service_hrs, 
+                      <span class="dt">V =</span> varLOR, <span class="dt">random =</span> <span class="kw">list</span>(<span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">|</span><span class="st"> </span>studyID, <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">|</span><span class="st"> </span>studySample),
                      <span class="dt">data =</span> dropoutPrevention)
 <span class="kw">summary</span>(m3_metafor)</code></pre></div>
 <pre><code>## 
@@ -168,7 +168,7 @@ m3_metafor &lt;-<span class="st"> </span><span class="kw">rma.mv</span>(LOR1 ~<s
 ## Test for Residual Heterogeneity: 
 ## QE(df = 363) = 1588.4397, p-val &lt; .0001
 ## 
-## Test of Moderators (coefficient(s) 2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22): 
+## Test of Moderators (coefficient(s) 2:22): 
 ## QM(df = 21) = 293.8694, p-val &lt; .0001
 ## 
 ## Model Results:
@@ -226,7 +226,7 @@ m3_metafor &lt;-<span class="st"> </span><span class="kw">rma.mv</span>(LOR1 ~<s
 ## 22           service_hrs -0.000309 0.004828 49.63      0.94915</code></pre>
 <p>Note that <code>coef_test</code> assumed that it should cluster based on <code>studyID</code>, which is the outer-most random effect in the metafor model. This can be specified explicitly by including the option <code>cluster = dropoutPrevention$studyID</code> in the call.</p>
 <p>The F-test for degree of evaluator independence uses the same syntax as before:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">Wald_test</span>(m3_metafor, <span class="dt">constraints =</span> <span class="dv">10</span>:<span class="dv">12</span>, <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">Wald_test</span>(m3_metafor, <span class="dt">constraints =</span> <span class="dv">10</span><span class="op">:</span><span class="dv">12</span>, <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</code></pre></div>
 <pre><code>##  Test    F d.f.  p.val
 ##   HTZ 2.71 18.3 0.0753</code></pre>
 <p>Despite some differences in weighting schemes, the p-value is very close to the result obtained using <code>robumeta</code>.</p>

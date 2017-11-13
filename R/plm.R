@@ -176,19 +176,14 @@ augmented_model_matrix.plm <- function(obj, cluster, inverse_var, ignore_FE) {
 residuals_CS.plm <- function(obj) {
   if (obj$args$model=="random") {
     y <- plm::pmodel.response(formula(obj), model.frame(obj), model = "pooling")
+    nm <- names(y)
+    y <- as.numeric(y)
+    names(y) <- nm
     Xb <- as.numeric(model_matrix(obj) %*% coef(obj))
     y - Xb
   } else {
     residuals(obj)
   }
-}
-
-#-------------------------------------
-# nobs
-#-------------------------------------
-
-nobs.plm <- function(object, ...) {
-  length(object$residuals)
 }
 
 #-------------------------------------
