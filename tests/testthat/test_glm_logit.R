@@ -1,6 +1,6 @@
 context("logit glm objects")
 
-m <- 10
+m <- 20
 cluster <- factor(rep(LETTERS[1:m], 3 + rpois(m, 5)))
 n <- length(cluster)
 X1 <- c(rep(-0.5, m / 2), rep(0.5, m / 2))[cluster]
@@ -8,7 +8,7 @@ X2 <- c(rep(-0.3, 0.4 * m), rep(0.7, 0.3 * m), rep(-0.3, 0.4 * m))[cluster]
 X3 <- rnorm(m)[cluster] + rnorm(n)
 X4 <- rnorm(n)
 X <- cbind(X1, X2, X3, X4)
-eta <- -0.5 + X %*% c(0.3, -0.6, 0.15, 0.15)
+eta <- -0.4 + X %*% c(0.3, -0.6, 0.15, 0.15)
 p <- 1 / (1 + exp(-eta))
 summary(p)
 
@@ -44,15 +44,15 @@ plogit_fit <- glm(yp ~ X1 + X2 + X3 + X4, data = dat, weights = w, family = "qua
 
 test_that("bread works", {
   
-  expect_true(check_bread(logit_fit, cluster = dat$cluster, check_coef = FALSE, tol = 10^-4))
+  expect_true(check_bread(logit_fit, cluster = dat$cluster, check_coef = FALSE, tol = 10^-3))
   glm_vcov <- bread(logit_fit) * summary(logit_fit)$dispersion / v_scale(logit_fit)
   expect_equal(vcov(logit_fit), glm_vcov)
   
-  expect_true(check_bread(sflogit_fit, cluster = dat$cluster, check_coef = FALSE, tol = 10^-4))
+  expect_true(check_bread(sflogit_fit, cluster = dat$cluster, check_coef = FALSE, tol = 10^-3))
   glm_vcov <- bread(sflogit_fit) * summary(sflogit_fit)$dispersion / v_scale(sflogit_fit)
   expect_equal(vcov(sflogit_fit), glm_vcov)
 
-  expect_true(check_bread(plogit_fit, cluster = dat$cluster, check_coef = FALSE, tol = 10^-4))
+  expect_true(check_bread(plogit_fit, cluster = dat$cluster, check_coef = FALSE, tol = 10^-3))
   glm_vcov <- bread(plogit_fit) * summary(plogit_fit)$dispersion / v_scale(plogit_fit)
   expect_equal(vcov(plogit_fit), glm_vcov)
   
@@ -148,7 +148,7 @@ test_that("vcovCR is equivalent to vcovHC when clusters are all of size 1", {
   CR_types <- paste0("CR", 0:3)
   CR_types[2] <- "CR1S"
   CR_list <- lapply(CR_types, function(t) as.matrix(vcovCR(logit_fit, cluster = dat$row, type = t)))
-  expect_equal(HC_list, CR_list, tol = 4 * 10^-6)
+  expect_equal(HC_list, CR_list, tol = 4 * 10^-4)
   
 })
 
@@ -165,7 +165,7 @@ test_that("Order doesn't matter.",{
   test_fit <- lapply(CR_types, function(x) coef_test(logit_fit, vcov = x, cluster = dat$cluster, test = "All"))
   test_scramble <- lapply(CR_types, function(x) coef_test(logit_scramble, vcov = x, cluster = dat_scramble$cluster, test = "All"))
   compare_tests <- mapply(function(a, b) max(abs(a / b - 1), na.rm = TRUE), test_fit, test_scramble)
-  expect_true(all(compare_tests < 10^-6))
+  expect_true(all(compare_tests < 10^-4))
   
   constraints <- combn(length(coef(logit_fit)), 2, simplify = FALSE)
   Wald_fit <- Wald_test(logit_fit, constraints = constraints, vcov = "CR2", cluster = dat$cluster, test = "All")
