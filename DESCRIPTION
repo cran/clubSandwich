@@ -1,7 +1,7 @@
 Package: clubSandwich
 Title: Cluster-Robust (Sandwich) Variance Estimators with Small-Sample
         Corrections
-Version: 0.3.1
+Version: 0.3.2
 Authors@R: person("James", "Pustejovsky", email = "jepusto@gmail.com", role = c("aut", "cre"))
 Description: Provides several cluster-robust variance estimators (i.e.,
     sandwich estimators) for ordinary and weighted least squares linear regression
@@ -26,11 +26,11 @@ VignetteBuilder: knitr
 LazyData: true
 Imports: stats, sandwich
 Suggests: Formula, knitr, carData, geepack, metafor, robumeta, nlme,
-        mlmRev, AER, plm (>= 1.6-4), testthat, rmarkdown
-RoxygenNote: 5.0.1
+        mlmRev, AER, plm (>= 1.6-4), lme4, zoo, testthat, rmarkdown
+RoxygenNote: 6.0.1
 NeedsCompilation: no
-Packaged: 2018-04-04 14:16:53 UTC; jep2963
+Packaged: 2018-05-21 20:14:57 UTC; jep2963
 Author: James Pustejovsky [aut, cre]
 Maintainer: James Pustejovsky <jepusto@gmail.com>
 Repository: CRAN
-Date/Publication: 2018-04-04 14:50:21 UTC
+Date/Publication: 2018-05-21 22:54:51 UTC
