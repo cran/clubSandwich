@@ -1,3 +1,8 @@
+clubSandwich 0.3.3
+=======================
+* impute_covariance_matrix() now drops unobserved factor levels.
+* updated method for handling residuals from rma.uni and rma.mv objects, for consistency with metafor 2.1-0.
+
 clubSandwich 0.3.2
 =======================
 * Added conf_int() to provide easy cluster-robust confidence intervals.
