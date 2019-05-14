@@ -1,4 +1,6 @@
 context("2-level lme objects")
+set.seed(20190513)
+
 suppressMessages(library(lme4, quietly=TRUE))
 library(nlme, quietly=TRUE, warn.conflicts=FALSE)
 library(mlmRev, quietly=TRUE, warn.conflicts=FALSE)
@@ -143,12 +145,13 @@ test_that("lme agrees with gls", {
   
   CR_lme <- lapply(CR_types, function(x) vcovCR(lme_fit, type = x))
   CR_gls <- lapply(CR_types, function(x) vcovCR(gls_fit, type = x))
-  max_ratio <- mapply(function(a, b) max(abs(a / b - 1)), CR_lme, CR_gls)
-  expect_true(all(max_ratio < 10^-4))
+  # max_ratio <- mapply(function(a, b) max(abs(a / b - 1)), CR_lme, CR_gls)
+  # expect_true(all(max_ratio < 10^-4))
+  expect_equivalent(CR_lme, CR_gls, tolerance = 10^-6)
   
   test_lme <- lapply(CR_types, function(x) coef_test(lme_fit, vcov = x, test = "All", p_values = FALSE))
   test_gls <- lapply(CR_types, function(x) coef_test(gls_fit, vcov = x, test = "All", p_values = FALSE))
-  expect_equal(test_lme, test_gls, tolerance = 10^-6)
+  expect_equal(test_lme, test_gls, tolerance = 10^-5)
   
   constraints <- c(combn(length(coef(lme_fit)), 2, simplify = FALSE),
                    combn(length(coef(lme_fit)), 3, simplify = FALSE))
