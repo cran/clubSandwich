@@ -12,7 +12,7 @@
 
 <meta name="author" content="James E. Pustejovsky" />
 
-<meta name="date" content="2019-05-14" />
+<meta name="date" content="2019-12-18" />
 
 <title>Meta-analysis with cluster-robust variance estimation</title>
 
@@ -303,7 +303,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 <h1 class="title toc-ignore">Meta-analysis with cluster-robust variance estimation</h1>
 <h4 class="author">James E. Pustejovsky</h4>
-<h4 class="date">2019-05-14</h4>
+<h4 class="date">2019-12-18</h4>
 
 
 
@@ -389,46 +389,46 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <pre><code>## 
 ## Multivariate Meta-Analysis Model (k = 385; method: REML)
 ## 
-##    logLik   Deviance        AIC        BIC       AICc  
-## -489.0357   978.0714  1026.0714  1119.5371  1029.6217  
+##    logLik   Deviance        AIC        BIC       AICc 
+## -489.0357   978.0714  1026.0714  1119.5371  1029.6217   
 ## 
-## Variance Components: 
+## Variance Components:
 ## 
-##             estim    sqrt  nlvls  fixed       factor
-## sigma^2.1  0.2274  0.4769    152     no      studyID
-## sigma^2.2  0.1145  0.3384    317     no  studySample
+##             estim    sqrt  nlvls  fixed       factor 
+## sigma^2.1  0.2274  0.4769    152     no      studyID 
+## sigma^2.2  0.1145  0.3384    317     no  studySample 
 ## 
-## Test for Residual Heterogeneity: 
+## Test for Residual Heterogeneity:
 ## QE(df = 363) = 1588.4397, p-val &lt; .0001
 ## 
-## Test of Moderators (coefficient(s) 2:22): 
+## Test of Moderators (coefficients 2:22):
 ## QM(df = 21) = 293.8694, p-val &lt; .0001
 ## 
 ## Model Results:
 ## 
-##                        estimate      se     zval    pval    ci.lb    ci.ub     
-## intrcpt                  0.5296  0.7250   0.7304  0.4651  -0.8915   1.9506     
-## study_designunmatched   -0.0494  0.1722  -0.2871  0.7741  -0.3870   0.2881     
-## study_designRCT          0.0653  0.1628   0.4010  0.6884  -0.2538   0.3843     
-## attrition               -0.1366  0.2429  -0.5623  0.5739  -0.6126   0.3395     
-## group_equivalence        0.4071  0.1573   2.5877  0.0097   0.0988   0.7155   **
-## adjustedyes             -0.3581  0.1532  -2.3371  0.0194  -0.6585  -0.0578    *
-## outcomeenrolled         -0.2831  0.0771  -3.6709  0.0002  -0.4343  -0.1320  ***
-## outcomegraduation       -0.0913  0.0657  -1.3896  0.1646  -0.2201   0.0375     
-## outcomegraduation/ged    0.6983  0.0805   8.6750  &lt;.0001   0.5406   0.8561  ***
-## evalindirect            -0.7530  0.4949  -1.5214  0.1282  -1.7230   0.2171     
-## evalplanning            -0.7700  0.4869  -1.5814  0.1138  -1.7242   0.1843     
-## evaldelivery            -1.0016  0.4600  -2.1774  0.0294  -1.9033  -0.1000    *
-## male_pct                 0.1021  0.1715   0.5951  0.5518  -0.2341   0.4382     
-## white_pct                0.1223  0.1804   0.6777  0.4979  -0.2313   0.4758     
-## average_age              0.0061  0.0291   0.2091  0.8344  -0.0509   0.0631     
-## implementmedium          0.4738  0.1609   2.9445  0.0032   0.1584   0.7892   **
-## implementhigh            0.6318  0.1471   4.2965  &lt;.0001   0.3436   0.9201  ***
-## program_sitemixed        0.3289  0.2413   1.3631  0.1729  -0.1440   0.8019     
-## program_siteclassroom    0.2920  0.1736   1.6821  0.0926  -0.0482   0.6321    .
-## program_siteschool       0.1616  0.1898   0.8515  0.3945  -0.2104   0.5337     
-## duration                 0.0013  0.0009   1.3423  0.1795  -0.0006   0.0031     
-## service_hrs             -0.0003  0.0047  -0.0654  0.9478  -0.0096   0.0090     
+##                        estimate      se     zval    pval    ci.lb    ci.ub 
+## intrcpt                  0.5296  0.7250   0.7304  0.4651  -0.8915   1.9506      
+## study_designunmatched   -0.0494  0.1722  -0.2871  0.7741  -0.3870   0.2881      
+## study_designRCT          0.0653  0.1628   0.4010  0.6884  -0.2538   0.3843      
+## attrition               -0.1366  0.2429  -0.5623  0.5739  -0.6126   0.3395      
+## group_equivalence        0.4071  0.1573   2.5877  0.0097   0.0988   0.7155   ** 
+## adjustedyes             -0.3581  0.1532  -2.3371  0.0194  -0.6585  -0.0578    * 
+## outcomeenrolled         -0.2831  0.0771  -3.6709  0.0002  -0.4343  -0.1320  *** 
+## outcomegraduation       -0.0913  0.0657  -1.3896  0.1646  -0.2201   0.0375      
+## outcomegraduation/ged    0.6983  0.0805   8.6750  &lt;.0001   0.5406   0.8561  *** 
+## evalindirect            -0.7530  0.4949  -1.5214  0.1282  -1.7230   0.2171      
+## evalplanning            -0.7700  0.4869  -1.5814  0.1138  -1.7242   0.1843      
+## evaldelivery            -1.0016  0.4600  -2.1774  0.0294  -1.9033  -0.1000    * 
+## male_pct                 0.1021  0.1715   0.5951  0.5518  -0.2341   0.4382      
+## white_pct                0.1223  0.1804   0.6777  0.4979  -0.2313   0.4758      
+## average_age              0.0061  0.0291   0.2091  0.8344  -0.0509   0.0631      
+## implementmedium          0.4738  0.1609   2.9445  0.0032   0.1584   0.7892   ** 
+## implementhigh            0.6318  0.1471   4.2965  &lt;.0001   0.3436   0.9201  *** 
+## program_sitemixed        0.3289  0.2413   1.3631  0.1729  -0.1440   0.8019      
+## program_siteclassroom    0.2920  0.1736   1.6821  0.0926  -0.0482   0.6321    . 
+## program_siteschool       0.1616  0.1898   0.8515  0.3945  -0.2104   0.5337      
+## duration                 0.0013  0.0009   1.3423  0.1795  -0.0006   0.0031      
+## service_hrs             -0.0003  0.0047  -0.0654  0.9478  -0.0096   0.0090      
 ## 
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
@@ -467,8 +467,8 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <div id="references" class="section level2">
 <h2>References</h2>
 <p>Fisher, Z., &amp; Tipton, E. (2015). robumeta: An R-package for robust variance estimation in meta-analysis. <a href="http://arxiv.org/abs/1503.02220">arXiv:1503.02220</a></p>
-<p>Tipton, E. (2015). Small sample adjustments for robust variance estimation with meta-regression. <em>Psychological Methods, 20</em>(3), 375-393. doi: <a href="http://dx.doi.org/10.1037/met0000011">10.1037/met0000011</a></p>
-<p>Tipton, E., &amp; Pustejovsky, J. E. (2015). Small-sample adjustments for tests of moderators and model fit using robust variance estimation in meta-regression. <em>Journal of Educational and Behavioral Statistics, 40</em>(6), 604-634. doi: <a href="http://dx.doi.org/10.3102/1076998615606099">10.3102/1076998615606099</a></p>
+<p>Tipton, E. (2015). Small sample adjustments for robust variance estimation with meta-regression. <em>Psychological Methods, 20</em>(3), 375-393. doi: <a href="https://doi.org/10.1037/met0000011">10.1037/met0000011</a></p>
+<p>Tipton, E., &amp; Pustejovsky, J. E. (2015). Small-sample adjustments for tests of moderators and model fit using robust variance estimation in meta-regression. <em>Journal of Educational and Behavioral Statistics, 40</em>(6), 604-634. doi: <a href="https://doi.org/10.3102/1076998615606099">10.3102/1076998615606099</a></p>
 <p>Viechtbauer, W. (2010). Conducting meta-analyses in R with the metafor package. <em>Journal of Statistical Software, 36</em>(3), 1-48. URL: <a href="http://www.jstatsoft.org/v36/i03/" class="uri">http://www.jstatsoft.org/v36/i03/</a></p>
 <p>Wilson, S. J., Lipsey, M. W., Tanner-Smith, E., Huang, C. H., &amp; Steinka-Fry, K. T. (2011). Dropout prevention and intervention programs: Effects on school completion and dropout Among school-aged children and youth: A systematic review. <em>Campbell Systematic Reviews, 7</em>(8). URL: <a href="http://www.campbellcollaboration.org/lib/project/158/" class="uri">http://www.campbellcollaboration.org/lib/project/158/</a></p>
 </div>
