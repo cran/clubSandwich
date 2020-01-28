@@ -1,7 +1,7 @@
 Package: clubSandwich
 Title: Cluster-Robust (Sandwich) Variance Estimators with Small-Sample
         Corrections
-Version: 0.4.0
+Version: 0.4.1
 Authors@R: person("James", "Pustejovsky", email = "jepusto@gmail.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0003-0591-9465"))
 Description: Provides several cluster-robust variance estimators (i.e.,
     sandwich estimators) for ordinary and weighted least squares linear regression
@@ -32,8 +32,8 @@ RoxygenNote: 6.1.1
 Encoding: UTF-8
 Language: en-US
 NeedsCompilation: no
-Packaged: 2019-12-18 13:31:19 UTC; jep2963
+Packaged: 2020-01-26 01:04:39 UTC; jep2963
 Author: James Pustejovsky [aut, cre] (<https://orcid.org/0000-0003-0591-9465>)
 Maintainer: James Pustejovsky <jepusto@gmail.com>
 Repository: CRAN
-Date/Publication: 2019-12-18 15:30:21 UTC
+Date/Publication: 2020-01-28 09:40:13 UTC
