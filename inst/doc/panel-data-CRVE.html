@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <meta name="author" content="James E. Pustejovsky" />
 
-<meta name="date" content="2020-01-25" />
+<meta name="date" content="2020-04-16" />
 
 <title>Cluster-robust standard errors and hypothesis tests in panel data models</title>
 
@@ -96,7 +96,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
       if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -117,9 +117,6 @@ padding-right: 2em;
 font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 font-size: 14px;
 line-height: 1.35;
-}
-#header {
-text-align: center;
 }
 #TOC {
 clear: both;
@@ -288,7 +285,8 @@ code > span.st { color: #d14; }
 code > span.co { color: #888888; font-style: italic; } 
 code > span.ot { color: #007020; } 
 code > span.al { color: #ff0000; font-weight: bold; } 
-code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
 </style>
 
 
@@ -303,7 +301,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 <h1 class="title toc-ignore">Cluster-robust standard errors and hypothesis tests in panel data models</h1>
 <h4 class="author">James E. Pustejovsky</h4>
-<h4 class="date">2020-01-25</h4>
+<h4 class="date">2020-04-16</h4>
 
 
 
@@ -316,7 +314,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>Carpenter and Dobkin (2011) analyzed the effects of changes in the minimum legal drinking age on rates of motor vehicle fatalies among 18-20 year olds, using state-level panel data from the National Highway Traffic Administration’s Fatal Accident Reporting System. In their new textbook, Angrist and Pischke (2014) developed a stylized example based on Carpenter and Dobkin’s work. The following example uses Angrist and Pischke’s data and follows their analysis because their data are <a href="http://masteringmetrics.com/resources/">easily available</a>.</p>
 <p>The outcome is the incidence of deaths in motor vehicle crashes among 18-20 year-olds (per 100,000 residents), for each state plus the District of Columbia, over the period 1970 to 1983. There were several changes in the minimum legal drinking age during this time period, with variability in the timing of changes across states. Angrist and Pischke (following Carpenter and Dobkin) use a difference-in-differences strategy to estimate the effects of lowering the minimum legal drinking age from 21 to 18. Their specification is</p>
 <p><span class="math display">\[y_{it} = \alpha_i + \beta_t + \gamma b_{it} + \delta d_{it} + \epsilon_{it},\]</span></p>
-<p>for <span class="math inline">\(i\)</span> = 1,…,51 and <span class="math inline">\(t\)</span> = 1970,…,1983. In this model, <span class="math inline">\(\alpha_i\)</span> is a state-specific fixed effect, <span class="math inline">\(\beta_t\)</span> is a year-specific fixed effect, <span class="math inline">\(b_{it}\)</span> is the current rate of beer taxation in state <span class="math inline">\(i\)</span> in year <span class="math inline">\(t\)</span>, <span class="math inline">\(d_{it}\)</span> is the proportion of 18-20 year-olds in state <span class="math inline">\(i\)</span> in year <span class="math inline">\(t\)</span> who are legally allowed to drink, and <span class="math inline">\(\delta\)</span> captures the effect of shifting the minimum legal drinking age from 21 to 18. Following Angrist and Pischke’s analysis, we estimate this model both by (unweighted) OLs and by weighted least squares with weights corresponding to population size in a given state and year. We also demonstrate random effects estimation and implement a cluster-robust Hausmann specification test.</p>
+<p>for <span class="math inline">\(i\)</span> = 1,…,51 and <span class="math inline">\(t\)</span> = 1970,…,1983. In this model, <span class="math inline">\(\alpha_i\)</span> is a state-specific fixed effect, <span class="math inline">\(\beta_t\)</span> is a year-specific fixed effect, <span class="math inline">\(b_{it}\)</span> is the current rate of beer taxation in state <span class="math inline">\(i\)</span> in year <span class="math inline">\(t\)</span>, <span class="math inline">\(d_{it}\)</span> is the proportion of 18-20 year-olds in state <span class="math inline">\(i\)</span> in year <span class="math inline">\(t\)</span> who are legally allowed to drink, and <span class="math inline">\(\delta\)</span> captures the effect of shifting the minimum legal drinking age from 21 to 18. Following Angrist and Pischke’s analysis, we estimate this model both by (unweighted) OLs and by weighted least squares with weights corresponding to population size in a given state and year. We also demonstrate random effects estimation and implement a cluster-robust Hausman specification test.</p>
 </div>
 <div id="unweighted-ols" class="section level2">
 <h2>Unweighted OLS</h2>
@@ -447,6 +445,9 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>Young, A. (2016). Improved, nearly exact, statistical inference with robust and clustered covariance matrices using effective degrees of freedom corrections.</p>
 </div>
 
+
+
+<!-- code folding -->
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
