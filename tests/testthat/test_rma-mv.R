@@ -176,7 +176,7 @@ test_that("clubSandwich works with missing vcov matrix", {
   
   CR_drop <- lapply(CR_types, function(x) vcovCR(corr_drop, cluster = dat_miss$studyid, type = x))
   CR_complete <- lapply(CR_types, function(x) vcovCR(corr_complete, type = x))
-  expect_equal(CR_drop, CR_complete)
+  expect_equal(CR_drop, CR_complete, tol = 10^-5)
   
   
   # V_complete <- impute_covariance_matrix(corrdat$var, cluster = corrdat$studyid, r = 0.8)
@@ -204,7 +204,7 @@ test_that("clubSandwich works with missing vcov matrix", {
 test_that("vcovCR options work for CR2", {
   RE_var <- targetVariance(hier_meta, cluster = factor(hierdat$studyid))
   CR2_iv <- vcovCR(hier_meta, type = "CR2", cluster = hierdat$studyid)
-  expect_identical(vcovCR(hier_meta, type = "CR2", cluster = hierdat$studyid, inverse_var = TRUE), CR2_iv)
+  expect_equal(vcovCR(hier_meta, type = "CR2", cluster = hierdat$studyid, inverse_var = TRUE), CR2_iv)
 
   CR2_not <- vcovCR(hier_meta, type = "CR2", cluster = hierdat$studyid, inverse_var = FALSE)
   expect_equal(CR2_not, CR2_iv)

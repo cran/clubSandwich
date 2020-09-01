@@ -39,8 +39,8 @@
 #' robu_CR2
 #' coef_test(robu_fit, vcov = robu_CR2, test = c("Satterthwaite", "saddlepoint"))
 #' 
-#' Wald_test(robu_fit, constraints = c(2,4), vcov = robu_CR2)
-#' Wald_test(robu_fit, constraints = 2:5, vcov = robu_CR2)
+#' Wald_test(robu_fit, constraints = constrain_zero(c(2,4)), vcov = robu_CR2)
+#' Wald_test(robu_fit, constraints = constrain_zero(2:5), vcov = robu_CR2)
 #' 
 
 
@@ -60,7 +60,8 @@ vcovCR.robu <- function(obj, cluster, type, target, inverse_var, form = "sandwic
 coef_CS.robu <- function(obj) {
   beta <- as.vector(obj$b.r)
   labs <- obj$reg_table$labels
-  names(beta) <- levels(labs)[labs]
+  if (is.factor(labs)) labs <- levels(labs)[labs]
+  names(beta) <- labs
   beta
 }
 
@@ -80,7 +81,7 @@ residuals_CS.robu <- function(obj) {
 
 model_matrix.robu <- function(obj) {
   ord <- order(order(obj$study_orig_id))
-  obj$Xreg[ord,]
+  obj$Xreg[ord,,drop=FALSE]
 }
 
 #-------------------------------------

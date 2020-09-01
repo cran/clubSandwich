@@ -4,6 +4,32 @@ set.seed(20190513)
 library(robumeta, quietly=TRUE)
 data(corrdat)
 
+
+test_that("methods work with intercept-only model.", {
+  
+  obj <- robu(effectsize ~ 1,
+              studynum = studyid,
+              var.eff.size = var,
+              small = FALSE,
+              data = corrdat)
+  N <- obj$M
+  k <- obj$N
+  
+  expect_equal(as.numeric(vcovCR(obj, type = "CR0")), as.numeric(obj$VR.r))
+  
+  expect_identical(as.numeric(clubSandwich:::coef_CS.robu(obj)), as.numeric(obj$b.r))
+  expect_identical(length(clubSandwich:::residuals_CS.robu(obj)), N)
+  expect_identical(dim(clubSandwich:::model_matrix.robu(obj)), c(N, 1L))
+  expect_identical(dim(clubSandwich:::bread.robu(obj)), c(1L, 1L))
+  
+  V_list <- clubSandwich:::targetVariance.robu(obj, cluster = obj$study_orig_id)
+  expect_identical(as.integer(sapply(V_list, nrow)), obj$k)
+  
+  W_list <- clubSandwich:::weightMatrix.robu(obj, cluster = obj$study_orig_id)
+  expect_identical(as.integer(sapply(W_list, nrow)), obj$k)
+  
+})
+
 corr_large <- robu(effectsize ~ males + college + binge, data = corrdat, 
                    modelweights = "CORR", studynum = studyid,
                    var.eff.size = var, small = FALSE)
@@ -165,15 +191,15 @@ test_that("dropoutPrevention tests replicate Tipton & Pustejovsky (2015) - full 
                         "Implmentation quality" = 16:17,
                         "Program format" = 18:20)
   
-  dropout_tests <- Wald_test(m3_hier, constraints = contrast_list, 
+  dropout_tests <- Wald_test(m3_hier, constraints = constrain_zero(contrast_list), 
                              vcov = m3_hier_CR2, test = c("Naive-F","HTZ"))
   
-  Fstat_club <- sapply(dropout_tests, function(x) x$F)
+  Fstat_club <- sapply(dropout_tests, function(x) x$Fstat)
   attr(Fstat_club, "dimnames") <- NULL
   Fstat_paper <- matrix(c(0.23, 0.22, 0.91, 0.84, 3.11, 2.78, 14.15, 13.78, 3.85, 3.65), nrow = 2)
   expect_equivalent(Fstat_paper, round(Fstat_club, 2))
   
-  df_club <- sapply(dropout_tests, function(x) x$df[2])
+  df_club <- sapply(dropout_tests, function(x) x$df_denom[2])
   df_paper <- c(42.9, 21.5, 16.8, 36.9, 37.5)
   attr(df_club, "names") <- NULL
   expect_equivalent(df_paper, round(df_club, 1))
@@ -191,8 +217,7 @@ test_that("dropoutPrevention tests replicate Tipton & Pustejovsky (2015) - reduc
   
   m3_hier_CR2 <- vcovCR(m3_hier, cluster = dp_subset$studyID, type = "CR2")
   expect_true(check_CR(m3_hier, vcov = m3_hier_CR2))
-  # expect_true(check_CR(m3_hier, vcov = "CR4"))
-
+  
   CR2_ttests <- coef_test(m3_hier, vcov = m3_hier_CR2, test = "Satterthwaite")
   
   expect_equivalent(m3_hier$VR.r, as.matrix(m3_hier_CR2))
@@ -205,15 +230,15 @@ test_that("dropoutPrevention tests replicate Tipton & Pustejovsky (2015) - reduc
                         "Implmentation quality" = 15:16,
                         "Program format" = 17:19)
   
-  dropout_tests <- Wald_test(m3_hier, constraints = contrast_list, 
+  dropout_tests <- Wald_test(m3_hier, constraints = constrain_zero(contrast_list), 
                              vcov = "CR2", test = c("Naive-F","HTZ"))
   
-  Fstat_club <- sapply(dropout_tests, function(x) x$F)
+  Fstat_club <- sapply(dropout_tests, function(x) x$Fstat)
   Fstat_paper <- matrix(c(3.19, 2.93, 1.05, 0.84, 0.32, 0.26, 4.02, 3.69, 1.19, 0.98), nrow = 2)
   attr(Fstat_club, "dimnames") <- NULL
   expect_equivalent(Fstat_paper, round(Fstat_club, 2))
   
-  df_club <- sapply(dropout_tests, function(x) x$df[2])
+  df_club <- sapply(dropout_tests, function(x) x$df_denom[2])
   df_paper <- c(11.0, 7.7, 4.6, 11.0, 9.1)
   attr(df_club, "names") <- NULL
   expect_equivalent(df_paper, round(df_club, 1))
@@ -239,8 +264,8 @@ test_that("order doesn't matter", {
   compare_ttests(test_fit, test_scramble)
   
   constraints <- combn(length(coef_CS(corr_small)), 2, simplify = FALSE)
-  Wald_fit <- Wald_test(corr_small, constraints = constraints, vcov = "CR2", test = "All")
-  Wald_scramble <- Wald_test(corr_scramble, constraints = constraints, vcov = "CR2", test = "All")
+  Wald_fit <- Wald_test(corr_small, constraints = constrain_zero(constraints), vcov = "CR2", test = "All")
+  Wald_scramble <- Wald_test(corr_scramble, constraints = constrain_zero(constraints), vcov = "CR2", test = "All")
   compare_Waldtests(Wald_fit, Wald_scramble)
 })
 
@@ -259,11 +284,11 @@ test_that("clubSandwich works with dropped observations", {
   
   CR_drop <- lapply(CR_types, function(x) vcovCR(hier_drop, type = x))
   CR_complete <- lapply(CR_types, function(x) vcovCR(hier_complete, type = x))
-  expect_identical(CR_drop, CR_complete)
+  expect_equal(CR_drop, CR_complete)
   
   test_drop <- lapply(CR_types, function(x) coef_test(hier_drop, vcov = x, test = "All", p_values = FALSE))
   test_complete <- lapply(CR_types, function(x) coef_test(hier_complete, vcov = x, test = "All", p_values = FALSE))
-  expect_identical(test_drop, test_complete)
+  expect_equal(test_drop, test_complete)
 })
 
 test_that("vcovCR options work for CR2", {
@@ -276,7 +301,7 @@ test_that("vcovCR options work for CR2", {
   
   iv <- mean(m3_hier$data.full$r.weights) / m3_hier$data.full$r.weights
   CR2_iv <- vcovCR(m3_hier, type = "CR2")
-  expect_identical(vcovCR(m3_hier, type = "CR2", inverse_var = TRUE), CR2_iv)
+  expect_equal(vcovCR(m3_hier, type = "CR2", inverse_var = TRUE), CR2_iv)
   expect_equal(vcovCR(m3_hier, type = "CR2", target = iv, inverse_var = TRUE), CR2_iv)
   
   CR2_not <- vcovCR(m3_hier, type = "CR2", inverse_var = FALSE)
@@ -284,8 +309,27 @@ test_that("vcovCR options work for CR2", {
   attr(CR2_iv, "target") <- attr(CR2_not, "target")
   expect_equal(CR2_not, CR2_iv)
   
-  expect_identical(vcovCR(m3_hier, type = "CR2", target = iv), CR2_not)
-  expect_identical(vcovCR(m3_hier, type = "CR2", target = iv, inverse_var = FALSE), CR2_not)
+  expect_equal(vcovCR(m3_hier, type = "CR2", target = iv), CR2_not)
+  expect_equal(vcovCR(m3_hier, type = "CR2", target = iv, inverse_var = FALSE), CR2_not)
   expect_false(identical(vcovCR(m3_hier, type = "CR2", target = m3_hier$data.full$var.eff.size), CR2_not))
 })
 
+
+test_that("Wald test problem.", {
+  
+  mod0 <- robu(formula = effectsize ~ 0 + factor(binge), 
+               data = hierdat, 
+               var.eff.size = var,
+               studynum = studyid, 
+               modelweights = "HIER", small = TRUE)
+  Wald0 <- Wald_test(mod0, constraints = constrain_equal(1:2), vcov = "CR2", test = "All")
+  
+  mod1 <- robu(formula = effectsize ~ binge, 
+               data = hierdat, 
+               var.eff.size = var,
+               studynum = studyid, 
+               modelweights = "HIER", small = TRUE)
+  Wald1 <- Wald_test(mod1, constraints = constrain_zero(2), vcov = "CR2", test = "All")
+  
+  compare_Waldtests(Wald0, Wald1)
+})

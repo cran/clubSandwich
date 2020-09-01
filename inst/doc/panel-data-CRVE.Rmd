@@ -28,7 +28,7 @@ The following example demonstrates how to use `clubSandwich` to do cluster-robus
 
 Carpenter and Dobkin (2011) analyzed the effects of changes in the minimum legal drinking age on rates of motor vehicle fatalies among 18-20 year olds, using state-level panel data from the National Highway Traffic Administration's Fatal Accident Reporting System. 
 In their new textbook, Angrist and Pischke (2014) developed a stylized example based on Carpenter and Dobkin's work. 
-The following example uses Angrist and Pischke's data and follows their analysis because their data are [easily available](http://masteringmetrics.com/resources/).
+The following example uses Angrist and Pischke's data and follows their analysis because their data are [easily available](https://masteringmetrics.com/resources/).
 
 The outcome is the incidence of deaths in motor vehicle crashes among 18-20 year-olds (per 100,000 residents), for each state plus the District of Columbia, over the period 1970 to 1983. 
 There were several changes in the minimum legal drinking age during this time period, with variability in the timing of changes across states. 
@@ -39,7 +39,7 @@ $$y_{it} = \alpha_i + \beta_t + \gamma b_{it} + \delta d_{it} + \epsilon_{it},$$
 
 for $i$ = 1,...,51 and $t$ = 1970,...,1983. 
 In this model, $\alpha_i$ is a state-specific fixed effect, $\beta_t$ is a year-specific fixed effect, $b_{it}$ is the current rate of beer taxation in state $i$ in year $t$, $d_{it}$ is the proportion of 18-20 year-olds in state $i$ in year $t$ who are legally allowed to drink, and $\delta$ captures the effect of shifting the minimum legal drinking age from 21 to 18. 
-Following Angrist and Pischke's analysis, we estimate this model both by (unweighted) OLs and by weighted least squares with weights corresponding to population size in a given state and year. 
+Following Angrist and Pischke's analysis, we estimate this model both by (unweighted) OLS and by weighted least squares with weights corresponding to population size in a given state and year. 
 We also demonstrate random effects estimation and implement a cluster-robust Hausman specification test.
 
 ## Unweighted OLS
@@ -173,14 +173,17 @@ coef_test(plm_Hausman, vcov = "CR2", test = "Satterthwaite")[1:4,]
 To conduct a joint test on the centered covariates, we can use the `Wald_test` function. The usual way to test this hypothesis would be to use the `CR1` variance estimator to calculate the robust Wald statistic, then use a $\chi^2_2$ reference distribution (or equivalently, compare a re-scaled Wald statistic to an $F(2,\infty)$ distribution). The `Wald_test` function reports the latter version: 
 
 ```{r}
-Wald_test(plm_Hausman, constraints = c("legal_cent","beer_cent"), 
+Wald_test(plm_Hausman, 
+          constraints = constrain_zero(c("legal_cent","beer_cent")), 
           vcov = "CR1", test = "chi-sq")
 ```
 
 The test is just shy of significance at the 5% level. If we instead use the `CR2` variance estimator and our newly proposed approximate F-test (which is the default in `Wald_test`), then we get:
 
 ```{r}
-Wald_test(plm_Hausman, constraints = c("legal_cent","beer_cent"), vcov = "CR2")
+Wald_test(plm_Hausman, 
+          constraints = constrain_zero(c("legal_cent","beer_cent")), 
+          vcov = "CR2")
 ```
 
 The low degrees of freedom of the test indicate that we're definitely in small-sample territory and should not trust the asymptotic $\chi^2$ approximation. 
@@ -192,7 +195,7 @@ Angrist, J. D., & Pischke, J. (2009). _Mostly harmless econometrics: An empirici
 
 Angrist, J. D., and Pischke, J. S. (2014). _Mastering'metrics: the path from cause to effect_. Princeton, NJ: Princeton University Press.
 
-Arellano, M. (1993). On the testing of correlated effects with panel data. Journal of Econometrics, 59(1-2), 87-97. doi: [10.1016/0304-4076(93)90040-C](http://www.sciencedirect.com/science/article/pii/030440769390040C) 
+Arellano, M. (1993). On the testing of correlated effects with panel data. Journal of Econometrics, 59(1-2), 87-97. doi: [10.1016/0304-4076(93)90040-C](https://www.sciencedirect.com/science/article/pii/030440769390040C) 
 
 Bell, R. M., & McCaffrey, D. F. (2002). Bias reduction in standard errors for linear regression with multi-stage samples. _Survey Methodology, 28_(2), 169-181.
 
@@ -200,7 +203,7 @@ Cameron, A. C., & Miller, D. L. (2015). A practitioner’s guide to cluster-robu
 
 Carpenter, C., & Dobkin, C. (2011). The minimum legal drinking age and public health. _Journal of Economic Perspectives, 25_(2), 133-156. doi: [10.1257/jep.25.2.133](https://doi.org/10.1257/jep.25.2.133)
 
-Imbens, G. W., & Kolesar, M. (2015). Robust standard errors in small samples: Some practical advice. URL: https://www.princeton.edu/~mkolesar/papers/small-robust.pdf
+Imbens, G. W., & Kolesar, M. (2015). Robust standard errors in small samples: Some practical advice. URL: https://doi.org/10.1162/REST_a_00552
 
 Pustejovsky, J. E. & Tipton, E. (2016). Small sample methods for cluster-robust variance estimation and hypothesis testing in fixed effects models. arXiv: [1601.01981](https://arxiv.org/abs/1601.01981) [stat.ME]
 

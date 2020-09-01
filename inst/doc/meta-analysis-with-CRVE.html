@@ -12,17 +12,33 @@
 
 <meta name="author" content="James E. Pustejovsky" />
 
-<meta name="date" content="2020-04-16" />
+<meta name="date" content="2020-08-28" />
 
 <title>Meta-analysis with cluster-robust variance estimation</title>
 
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
 
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css" data-origin="pandoc">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; }
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode { white-space: pre; position: relative; }
 div.sourceCode { margin: 1em 0; }
@@ -32,14 +48,16 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
-pre.numberSource a.sourceLine
-  { position: relative; left: -4em; }
-pre.numberSource a.sourceLine::before
-  { content: attr(title);
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
     position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all; display: inline-block;
+    border: none; display: inline-block;
     -webkit-touch-callout: none; -webkit-user-select: none;
     -khtml-user-select: none; -moz-user-select: none;
     -ms-user-select: none; user-select: none;
@@ -48,9 +66,9 @@ pre.numberSource a.sourceLine::before
   }
 pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
 div.sourceCode
-  {  }
+  {   }
 @media screen {
-a.sourceLine::before { text-decoration: underline; }
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
@@ -301,7 +319,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Meta-analysis with cluster-robust variance estimation</h1>
 <h4 class="author">James E. Pustejovsky</h4>
-<h4 class="date">2020-04-16</h4>
+<h4 class="date">2020-08-28</h4>
 
 
 
@@ -309,24 +327,24 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>The original analysis included a meta-regression with covariates that capture methodological, participant, and program characteristics. The regression specification used here is similar to Model III from Wilson et al. (2011), but treats the <code>evaluator_independence</code> and <code>implementation_quality</code> variables as categorical rather than interval-level. Also, the original analysis clustered at the level of the sample (some studies reported results from multiple samples), whereas here we cluster at the study level. The meta-regression can be fit in several different ways. We first demonstrate using the <code>robumeta</code> package (Fisher &amp; Tipton, 2015) and then using the <code>metafor</code> package (Viechtbauer, 2010).</p>
 <div id="robumeta-model" class="section level2">
 <h2>robumeta model</h2>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">library</span>(clubSandwich)</a>
-<a class="sourceLine" id="cb1-2" title="2"><span class="kw">library</span>(robumeta)</a>
-<a class="sourceLine" id="cb1-3" title="3"><span class="kw">data</span>(dropoutPrevention)</a>
-<a class="sourceLine" id="cb1-4" title="4"></a>
-<a class="sourceLine" id="cb1-5" title="5"><span class="co"># clean formatting</span></a>
-<a class="sourceLine" id="cb1-6" title="6"><span class="kw">names</span>(dropoutPrevention)[<span class="dv">7</span><span class="op">:</span><span class="dv">8</span>] &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;eval&quot;</span>,<span class="st">&quot;implement&quot;</span>)</a>
-<a class="sourceLine" id="cb1-7" title="7"><span class="kw">levels</span>(dropoutPrevention<span class="op">$</span>eval) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;independent&quot;</span>,<span class="st">&quot;indirect&quot;</span>,<span class="st">&quot;planning&quot;</span>,<span class="st">&quot;delivery&quot;</span>)</a>
-<a class="sourceLine" id="cb1-8" title="8"><span class="kw">levels</span>(dropoutPrevention<span class="op">$</span>implement) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;low&quot;</span>,<span class="st">&quot;medium&quot;</span>,<span class="st">&quot;high&quot;</span>)</a>
-<a class="sourceLine" id="cb1-9" title="9"><span class="kw">levels</span>(dropoutPrevention<span class="op">$</span>program_site) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;community&quot;</span>,<span class="st">&quot;mixed&quot;</span>,<span class="st">&quot;classroom&quot;</span>,<span class="st">&quot;school&quot;</span>)</a>
-<a class="sourceLine" id="cb1-10" title="10"><span class="kw">levels</span>(dropoutPrevention<span class="op">$</span>study_design) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;matched&quot;</span>,<span class="st">&quot;unmatched&quot;</span>,<span class="st">&quot;RCT&quot;</span>)</a>
-<a class="sourceLine" id="cb1-11" title="11"><span class="kw">levels</span>(dropoutPrevention<span class="op">$</span>adjusted) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;no&quot;</span>,<span class="st">&quot;yes&quot;</span>)</a>
-<a class="sourceLine" id="cb1-12" title="12"></a>
-<a class="sourceLine" id="cb1-13" title="13">m3_robu &lt;-<span class="st"> </span><span class="kw">robu</span>(LOR1 <span class="op">~</span><span class="st"> </span>study_design <span class="op">+</span><span class="st"> </span>attrition <span class="op">+</span><span class="st"> </span>group_equivalence <span class="op">+</span><span class="st"> </span>adjusted</a>
-<a class="sourceLine" id="cb1-14" title="14">                <span class="op">+</span><span class="st"> </span>outcome <span class="op">+</span><span class="st"> </span>eval <span class="op">+</span><span class="st"> </span>male_pct <span class="op">+</span><span class="st"> </span>white_pct <span class="op">+</span><span class="st"> </span>average_age</a>
-<a class="sourceLine" id="cb1-15" title="15">                <span class="op">+</span><span class="st"> </span>implement <span class="op">+</span><span class="st"> </span>program_site <span class="op">+</span><span class="st"> </span>duration <span class="op">+</span><span class="st"> </span>service_hrs, </a>
-<a class="sourceLine" id="cb1-16" title="16">                <span class="dt">data =</span> dropoutPrevention, <span class="dt">studynum =</span> studyID, <span class="dt">var.eff.size =</span> varLOR, </a>
-<a class="sourceLine" id="cb1-17" title="17">                <span class="dt">modelweights =</span> <span class="st">&quot;HIER&quot;</span>)</a>
-<a class="sourceLine" id="cb1-18" title="18"><span class="kw">print</span>(m3_robu)</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(clubSandwich)</span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(robumeta)</span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="kw">data</span>(dropoutPrevention)</span>
+<span id="cb1-4"><a href="#cb1-4"></a></span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="co"># clean formatting</span></span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="kw">names</span>(dropoutPrevention)[<span class="dv">7</span><span class="op">:</span><span class="dv">8</span>] &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;eval&quot;</span>,<span class="st">&quot;implement&quot;</span>)</span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="kw">levels</span>(dropoutPrevention<span class="op">$</span>eval) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;independent&quot;</span>,<span class="st">&quot;indirect&quot;</span>,<span class="st">&quot;planning&quot;</span>,<span class="st">&quot;delivery&quot;</span>)</span>
+<span id="cb1-8"><a href="#cb1-8"></a><span class="kw">levels</span>(dropoutPrevention<span class="op">$</span>implement) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;low&quot;</span>,<span class="st">&quot;medium&quot;</span>,<span class="st">&quot;high&quot;</span>)</span>
+<span id="cb1-9"><a href="#cb1-9"></a><span class="kw">levels</span>(dropoutPrevention<span class="op">$</span>program_site) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;community&quot;</span>,<span class="st">&quot;mixed&quot;</span>,<span class="st">&quot;classroom&quot;</span>,<span class="st">&quot;school&quot;</span>)</span>
+<span id="cb1-10"><a href="#cb1-10"></a><span class="kw">levels</span>(dropoutPrevention<span class="op">$</span>study_design) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;matched&quot;</span>,<span class="st">&quot;unmatched&quot;</span>,<span class="st">&quot;RCT&quot;</span>)</span>
+<span id="cb1-11"><a href="#cb1-11"></a><span class="kw">levels</span>(dropoutPrevention<span class="op">$</span>adjusted) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;no&quot;</span>,<span class="st">&quot;yes&quot;</span>)</span>
+<span id="cb1-12"><a href="#cb1-12"></a></span>
+<span id="cb1-13"><a href="#cb1-13"></a>m3_robu &lt;-<span class="st"> </span><span class="kw">robu</span>(LOR1 <span class="op">~</span><span class="st"> </span>study_design <span class="op">+</span><span class="st"> </span>attrition <span class="op">+</span><span class="st"> </span>group_equivalence <span class="op">+</span><span class="st"> </span>adjusted</span>
+<span id="cb1-14"><a href="#cb1-14"></a>                <span class="op">+</span><span class="st"> </span>outcome <span class="op">+</span><span class="st"> </span>eval <span class="op">+</span><span class="st"> </span>male_pct <span class="op">+</span><span class="st"> </span>white_pct <span class="op">+</span><span class="st"> </span>average_age</span>
+<span id="cb1-15"><a href="#cb1-15"></a>                <span class="op">+</span><span class="st"> </span>implement <span class="op">+</span><span class="st"> </span>program_site <span class="op">+</span><span class="st"> </span>duration <span class="op">+</span><span class="st"> </span>service_hrs, </span>
+<span id="cb1-16"><a href="#cb1-16"></a>                <span class="dt">data =</span> dropoutPrevention, <span class="dt">studynum =</span> studyID, <span class="dt">var.eff.size =</span> varLOR, </span>
+<span id="cb1-17"><a href="#cb1-17"></a>                <span class="dt">modelweights =</span> <span class="st">&quot;HIER&quot;</span>)</span>
+<span id="cb1-18"><a href="#cb1-18"></a><span class="kw">print</span>(m3_robu)</span></code></pre></div>
 <pre><code>## RVE: Hierarchical Effects Model with Small-Sample Corrections 
 ## 
 ## Model: LOR1 ~ study_design + attrition + group_equivalence + adjusted + outcome + eval + male_pct + white_pct + average_age + implement + program_site + duration + service_hrs 
@@ -364,11 +382,11 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## ---
 ## Note: If df &lt; 4, do not trust the results</code></pre>
 <p>Note that <code>robumeta</code> produces small-sample corrected standard errors and t-tests, and so there is no need to repeat those calculations with <code>clubSandwich</code>. The <code>eval</code> variable has four levels, and it might be of interest to test whether the average program effects differ by the degree of evaluator independence. The null hypothesis in this case is that the 10th, 11th, and 12th regression coefficients are all equal to zero. A small-sample adjusted F-test for this hypothesis can be obtained as follows. The <code>vcov = &quot;CR2&quot;</code> option means that the standard errors will be corrected using the bias-reduced linearization estimator described in Tipton and Pustejovsky (2015).</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="kw">Wald_test</span>(m3_robu, <span class="dt">constraints =</span> <span class="dv">10</span><span class="op">:</span><span class="dv">12</span>, <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</a></code></pre></div>
-<pre><code>##  Test    F d.f.  p.val
-##   HTZ 2.78 16.8 0.0732</code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">Wald_test</span>(m3_robu, <span class="dt">constraints =</span> <span class="kw">constrain_zero</span>(<span class="dv">10</span><span class="op">:</span><span class="dv">12</span>), <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</span></code></pre></div>
+<pre><code>##  test Fstat df_num df_denom  p_val sig
+##   HTZ  2.78      3     16.8 0.0732   .</code></pre>
 <p>By default, the <code>Wald_test</code> function provides an F-type test with degrees of freedom estimated using the approximate Hotelling’s <span class="math inline">\(T^2_Z\)</span> method. The test has less than 17 degrees of freedom, even though there are 152 independent studies in the data, and has a p-value that is not quite significant at conventional levels. The low degrees of freedom are a consequence of the fact that one of the levels of <code>evaluator independence</code> has only a few effect sizes in it:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw">table</span>(dropoutPrevention<span class="op">$</span>eval)</a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">table</span>(dropoutPrevention<span class="op">$</span>eval)</span></code></pre></div>
 <pre><code>## 
 ## independent    indirect    planning    delivery 
 ##           6          33          43         303</code></pre>
@@ -376,14 +394,14 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div id="metafor-model" class="section level2">
 <h2>metafor model</h2>
 <p><code>clubSandwich</code> also works with models fit using the <code>metafor</code> package. Here we re-fit the same regression specification, but use REML to estimate the variance components (<code>robumeta</code> uses a method-of-moments estimator), as well as a somewhat different weighting scheme than that used in <code>robumeta</code>.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw">library</span>(metafor)</a>
-<a class="sourceLine" id="cb7-2" title="2">m3_metafor &lt;-<span class="st"> </span><span class="kw">rma.mv</span>(LOR1 <span class="op">~</span><span class="st"> </span>study_design <span class="op">+</span><span class="st"> </span>attrition <span class="op">+</span><span class="st"> </span>group_equivalence <span class="op">+</span><span class="st"> </span>adjusted</a>
-<a class="sourceLine" id="cb7-3" title="3">                      <span class="op">+</span><span class="st"> </span>outcome <span class="op">+</span><span class="st"> </span>eval</a>
-<a class="sourceLine" id="cb7-4" title="4">                      <span class="op">+</span><span class="st"> </span>male_pct <span class="op">+</span><span class="st"> </span>white_pct <span class="op">+</span><span class="st"> </span>average_age</a>
-<a class="sourceLine" id="cb7-5" title="5">                      <span class="op">+</span><span class="st"> </span>implement <span class="op">+</span><span class="st"> </span>program_site <span class="op">+</span><span class="st"> </span>duration <span class="op">+</span><span class="st"> </span>service_hrs, </a>
-<a class="sourceLine" id="cb7-6" title="6">                      <span class="dt">V =</span> varLOR, <span class="dt">random =</span> <span class="kw">list</span>(<span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">|</span><span class="st"> </span>studyID, <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">|</span><span class="st"> </span>studySample),</a>
-<a class="sourceLine" id="cb7-7" title="7">                     <span class="dt">data =</span> dropoutPrevention)</a>
-<a class="sourceLine" id="cb7-8" title="8"><span class="kw">summary</span>(m3_metafor)</a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">library</span>(metafor)</span>
+<span id="cb7-2"><a href="#cb7-2"></a>m3_metafor &lt;-<span class="st"> </span><span class="kw">rma.mv</span>(LOR1 <span class="op">~</span><span class="st"> </span>study_design <span class="op">+</span><span class="st"> </span>attrition <span class="op">+</span><span class="st"> </span>group_equivalence <span class="op">+</span><span class="st"> </span>adjusted</span>
+<span id="cb7-3"><a href="#cb7-3"></a>                      <span class="op">+</span><span class="st"> </span>outcome <span class="op">+</span><span class="st"> </span>eval</span>
+<span id="cb7-4"><a href="#cb7-4"></a>                      <span class="op">+</span><span class="st"> </span>male_pct <span class="op">+</span><span class="st"> </span>white_pct <span class="op">+</span><span class="st"> </span>average_age</span>
+<span id="cb7-5"><a href="#cb7-5"></a>                      <span class="op">+</span><span class="st"> </span>implement <span class="op">+</span><span class="st"> </span>program_site <span class="op">+</span><span class="st"> </span>duration <span class="op">+</span><span class="st"> </span>service_hrs, </span>
+<span id="cb7-6"><a href="#cb7-6"></a>                      <span class="dt">V =</span> varLOR, <span class="dt">random =</span> <span class="kw">list</span>(<span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">|</span><span class="st"> </span>studyID, <span class="op">~</span><span class="st"> </span><span class="dv">1</span> <span class="op">|</span><span class="st"> </span>studySample),</span>
+<span id="cb7-7"><a href="#cb7-7"></a>                     <span class="dt">data =</span> dropoutPrevention)</span>
+<span id="cb7-8"><a href="#cb7-8"></a><span class="kw">summary</span>(m3_metafor)</span></code></pre></div>
 <pre><code>## 
 ## Multivariate Meta-Analysis Model (k = 385; method: REML)
 ## 
@@ -431,7 +449,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><code>metafor</code> produces model-based standard errors, t-tests, and confidence intervals. The <code>coef_test</code> function from <code>clubSandwich</code> will calculate robust standard errors and robust t-tests for each of the coefficients:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="kw">coef_test</span>(m3_metafor, <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="kw">coef_test</span>(m3_metafor, <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</span></code></pre></div>
 <pre><code>##                    Coef.  Estimate       SE  t-stat  d.f. p-val (Satt) Sig.
 ## 1                intrcpt  0.529569 0.724851  0.7306 20.08      0.47347     
 ## 2  study_designunmatched -0.049434 0.204152 -0.2421 58.42      0.80952     
@@ -457,17 +475,17 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## 22           service_hrs -0.000309 0.004828 -0.0641 49.63      0.94915</code></pre>
 <p>Note that <code>coef_test</code> assumed that it should cluster based on <code>studyID</code>, which is the outer-most random effect in the metafor model. This can be specified explicitly by including the option <code>cluster = dropoutPrevention$studyID</code> in the call.</p>
 <p>The F-test for degree of evaluator independence uses the same syntax as before:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw">Wald_test</span>(m3_metafor, <span class="dt">constraints =</span> <span class="dv">10</span><span class="op">:</span><span class="dv">12</span>, <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</a></code></pre></div>
-<pre><code>##  Test    F d.f.  p.val
-##   HTZ 2.71 18.3 0.0753</code></pre>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="kw">Wald_test</span>(m3_metafor, <span class="dt">constraints =</span> <span class="kw">constrain_zero</span>(<span class="dv">10</span><span class="op">:</span><span class="dv">12</span>), <span class="dt">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</span></code></pre></div>
+<pre><code>##  test Fstat df_num df_denom  p_val sig
+##   HTZ  2.71      3     18.3 0.0753   .</code></pre>
 <p>Despite some differences in weighting schemes, the p-value is very close to the result obtained using <code>robumeta</code>.</p>
 </div>
 <div id="references" class="section level2">
 <h2>References</h2>
-<p>Fisher, Z., &amp; Tipton, E. (2015). robumeta: An R-package for robust variance estimation in meta-analysis. <a href="http://arxiv.org/abs/1503.02220">arXiv:1503.02220</a></p>
+<p>Fisher, Z., &amp; Tipton, E. (2015). robumeta: An R-package for robust variance estimation in meta-analysis. <a href="https://arxiv.org/abs/1503.02220">arXiv:1503.02220</a></p>
 <p>Tipton, E. (2015). Small sample adjustments for robust variance estimation with meta-regression. <em>Psychological Methods, 20</em>(3), 375-393. <a href="https://doi.org/10.1037/met0000011" class="uri">https://doi.org/10.1037/met0000011</a></p>
 <p>Tipton, E., &amp; Pustejovsky, J. E. (2015). Small-sample adjustments for tests of moderators and model fit using robust variance estimation in meta-regression. <em>Journal of Educational and Behavioral Statistics, 40</em>(6), 604-634. <a href="https://doi.org/10.3102/1076998615606099" class="uri">https://doi.org/10.3102/1076998615606099</a></p>
-<p>Viechtbauer, W. (2010). Conducting meta-analyses in R with the metafor package. <em>Journal of Statistical Software, 36</em>(3), 1-48. URL: <a href="http://www.jstatsoft.org/v36/i03/" class="uri">http://www.jstatsoft.org/v36/i03/</a></p>
+<p>Viechtbauer, W. (2010). Conducting meta-analyses in R with the metafor package. <em>Journal of Statistical Software, 36</em>(3), 1-48. URL: <a href="https://www.jstatsoft.org/v36/i03/" class="uri">https://www.jstatsoft.org/v36/i03/</a></p>
 <p>Wilson, S. J., Lipsey, M. W., Tanner-Smith, E., Huang, C. H., &amp; Steinka-Fry, K. T. (2011). Dropout prevention and intervention programs: Effects on school completion and dropout Among school-aged children and youth: A systematic review. <em>Campbell Systematic Reviews, 7</em>(1), 1-61. <a href="https://doi.org/10.4073/csr.2011.8" class="uri">https://doi.org/10.4073/csr.2011.8</a></p>
 </div>
 

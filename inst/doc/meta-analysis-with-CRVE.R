@@ -22,7 +22,7 @@ m3_robu <- robu(LOR1 ~ study_design + attrition + group_equivalence + adjusted
 print(m3_robu)
 
 ## -------------------------------------------------------------------------------------------------
-Wald_test(m3_robu, constraints = 10:12, vcov = "CR2")
+Wald_test(m3_robu, constraints = constrain_zero(10:12), vcov = "CR2")
 
 ## -------------------------------------------------------------------------------------------------
 table(dropoutPrevention$eval)
@@ -41,5 +41,5 @@ summary(m3_metafor)
 coef_test(m3_metafor, vcov = "CR2")
 
 ## -------------------------------------------------------------------------------------------------
-Wald_test(m3_metafor, constraints = 10:12, vcov = "CR2")
+Wald_test(m3_metafor, constraints = constrain_zero(10:12), vcov = "CR2")
 

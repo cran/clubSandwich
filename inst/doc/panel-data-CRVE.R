@@ -58,9 +58,12 @@ plm_Hausman <- plm(mrate ~ 0 + legal + beertaxa + legal_cent + beer_cent + facto
 coef_test(plm_Hausman, vcov = "CR2", test = "Satterthwaite")[1:4,]
 
 ## -------------------------------------------------------------------------------------------------
-Wald_test(plm_Hausman, constraints = c("legal_cent","beer_cent"), 
+Wald_test(plm_Hausman, 
+          constraints = constrain_zero(c("legal_cent","beer_cent")), 
           vcov = "CR1", test = "chi-sq")
 
 ## -------------------------------------------------------------------------------------------------
-Wald_test(plm_Hausman, constraints = c("legal_cent","beer_cent"), vcov = "CR2")
+Wald_test(plm_Hausman, 
+          constraints = constrain_zero(c("legal_cent","beer_cent")), 
+          vcov = "CR2")
 

@@ -114,29 +114,29 @@ test_that("CR0 and CR1S agree with arellano vcov", {
 
 test_that("vcovCR options work for CR2", {
   CR2_iv <- vcovCR(plm_individual, type = "CR2")
-  expect_identical(vcovCR(plm_individual, cluster = Produc_scramble$state, type = "CR2"), CR2_iv)
+  expect_equal(vcovCR(plm_individual, cluster = Produc_scramble$state, type = "CR2"), CR2_iv)
   expect_equal(vcovCR(plm_individual, type = "CR2", inverse_var = TRUE), CR2_iv)
   expect_equal(vcovCR(plm_individual, type = "CR2", target = rep(1, n), inverse_var = TRUE), CR2_iv)
   
   CR2_not <- vcovCR(plm_individual, type = "CR2", inverse_var = FALSE)
   expect_equivalent(CR2_not, CR2_iv)
-  expect_identical(vcovCR(plm_individual, cluster = Produc_scramble$state, type = "CR2", inverse_var = FALSE), CR2_not)
-  expect_identical(vcovCR(plm_individual, type = "CR2", target = rep(1, n)), CR2_not)
-  expect_identical(vcovCR(plm_individual, type = "CR2", target = rep(1, n), inverse_var = FALSE), CR2_not)
+  expect_equal(vcovCR(plm_individual, cluster = Produc_scramble$state, type = "CR2", inverse_var = FALSE), CR2_not)
+  expect_equal(vcovCR(plm_individual, type = "CR2", target = rep(1, n)), CR2_not)
+  expect_equal(vcovCR(plm_individual, type = "CR2", target = rep(1, n), inverse_var = FALSE), CR2_not)
   expect_false(identical(vcovCR(plm_individual, type = "CR2", target = 1 / Produc_scramble$emp), CR2_not))
 })
 
 test_that("vcovCR options work for CR4", {
   CR4_iv <- vcovCR(plm_individual, type = "CR4")
-  expect_identical(vcovCR(plm_individual, cluster = Produc_scramble$state, type = "CR4"), CR4_iv)
-  expect_identical(vcovCR(plm_individual, type = "CR4", inverse_var = TRUE), CR4_iv)
-  expect_identical(vcovCR(plm_individual, type = "CR4", target = rep(1, n), inverse_var = TRUE), CR4_iv)
+  expect_equal(vcovCR(plm_individual, cluster = Produc_scramble$state, type = "CR4"), CR4_iv)
+  expect_equal(vcovCR(plm_individual, type = "CR4", inverse_var = TRUE), CR4_iv)
+  expect_equal(vcovCR(plm_individual, type = "CR4", target = rep(1, n), inverse_var = TRUE), CR4_iv)
   
   CR4_not <- vcovCR(plm_individual, type = "CR4", inverse_var = FALSE)
   expect_equivalent(CR4_not, CR4_iv)
-  expect_identical(vcovCR(plm_individual, cluster = Produc_scramble$state, type = "CR4", inverse_var = FALSE), CR4_not)
-  expect_identical(vcovCR(plm_individual, type = "CR4", target = rep(1, n)), CR4_not)
-  expect_identical(vcovCR(plm_individual, type = "CR4", target = rep(1, n), inverse_var = FALSE), CR4_not)
+  expect_equal(vcovCR(plm_individual, cluster = Produc_scramble$state, type = "CR4", inverse_var = FALSE), CR4_not)
+  expect_equal(vcovCR(plm_individual, type = "CR4", target = rep(1, n)), CR4_not)
+  expect_equal(vcovCR(plm_individual, type = "CR4", target = rep(1, n), inverse_var = FALSE), CR4_not)
   expect_false(identical(vcovCR(plm_individual, type = "CR4", target = 1 / Produc_scramble$emp), CR4_not))
 })
 
@@ -205,7 +205,7 @@ test_that("CR2 is equivalent to Welch t-test for DiD design", {
   plm_DID <- plm(y ~ trt, data = dat, index = c("cluster","time"), 
                  effect = "twoways", model = "within")
   plm_Satt <- coef_test(plm_DID, vcov = "CR2", cluster = dat$cluster)["trt",]
-  plm_Wald <- Wald_test(plm_DID, constraints = 1, vcov = "CR2", cluster = dat$cluster)
+  plm_Wald <- Wald_test(plm_DID, constraints = constrain_zero(1), vcov = "CR2", cluster = dat$cluster)
   df <- m^2 * (m0 - 1) * (m1 - 1) / (m0^2 * (m0 - 1) + m1^2 * (m1 - 1))
   y_diff <- apply(matrix(y, nrow = 2), 2, diff)
   t_Welch <- t.test(y_diff ~ trt_clusters)
@@ -215,5 +215,5 @@ test_that("CR2 is equivalent to Welch t-test for DiD design", {
   expect_equal(as.numeric(-t_Welch$statistic)^2, plm_Wald$Fstat)
   expect_is(all.equal(as.numeric(t_Welch$parameter), plm_Satt$df), "character")
   expect_equal(plm_Satt$df, df)
-  expect_equal(plm_Wald$df, df)
+  expect_equal(plm_Wald$df_denom, df)
 })

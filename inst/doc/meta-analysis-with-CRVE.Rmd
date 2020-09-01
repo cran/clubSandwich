@@ -52,7 +52,7 @@ A small-sample adjusted F-test for this hypothesis can be obtained as follows.
 The `vcov = "CR2"` option means that the standard errors will be corrected using the bias-reduced linearization estimator described in Tipton and Pustejovsky (2015).
 
 ```{r}
-Wald_test(m3_robu, constraints = 10:12, vcov = "CR2")
+Wald_test(m3_robu, constraints = constrain_zero(10:12), vcov = "CR2")
 ```
 
 By default, the `Wald_test` function provides an F-type test with degrees of freedom estimated using the approximate Hotelling's $T^2_Z$ method. The test has less than 17 degrees of freedom, even though there are 152 independent studies in the data, and has a p-value that is not quite significant at conventional levels. The low degrees of freedom are a consequence of the fact that one of the levels of `evaluator independence` has only a few effect sizes in it:
@@ -86,19 +86,19 @@ Note that `coef_test` assumed that it should cluster based on `studyID`, which i
 
 The F-test for degree of evaluator independence uses the same syntax as before:
 ```{r}
-Wald_test(m3_metafor, constraints = 10:12, vcov = "CR2")
+Wald_test(m3_metafor, constraints = constrain_zero(10:12), vcov = "CR2")
 ```
 
 Despite some differences in weighting schemes, the p-value is very close to the result obtained using `robumeta`.
 
 ## References 
 
-Fisher, Z., & Tipton, E. (2015). robumeta: An R-package for robust variance estimation in meta-analysis. [arXiv:1503.02220](http://arxiv.org/abs/1503.02220)
+Fisher, Z., & Tipton, E. (2015). robumeta: An R-package for robust variance estimation in meta-analysis. [arXiv:1503.02220](https://arxiv.org/abs/1503.02220)
 
 Tipton, E. (2015). Small sample adjustments for robust variance estimation with meta-regression. _Psychological Methods, 20_(3), 375-393. https://doi.org/10.1037/met0000011
 
 Tipton, E., & Pustejovsky, J. E. (2015). Small-sample adjustments for tests of moderators and model fit using robust variance estimation in meta-regression. _Journal of Educational and Behavioral Statistics, 40_(6), 604-634. https://doi.org/10.3102/1076998615606099
 
-Viechtbauer, W. (2010). Conducting meta-analyses in R with the metafor package. _Journal of Statistical Software, 36_(3), 1-48. URL: http://www.jstatsoft.org/v36/i03/
+Viechtbauer, W. (2010). Conducting meta-analyses in R with the metafor package. _Journal of Statistical Software, 36_(3), 1-48. URL: https://www.jstatsoft.org/v36/i03/
   
 Wilson, S. J., Lipsey, M. W., Tanner-Smith, E., Huang, C. H., & Steinka-Fry, K. T. (2011). Dropout prevention and intervention programs: Effects on school completion and dropout Among school-aged children and youth: A systematic review. _Campbell Systematic Reviews, 7_(1), 1-61. https://doi.org/10.4073/csr.2011.8

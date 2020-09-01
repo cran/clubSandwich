@@ -28,8 +28,8 @@ test_that("bread works", {
 
 test_that("vcovCR options work for CR2", {
   CR2_A <- vcovCR(obj_A, type = "CR2")
-  expect_identical(vcovCR(obj_A, cluster = BodyWeight$Rat, type = "CR2"), CR2_A)
-  expect_identical(vcovCR(obj_A, type = "CR2", inverse_var = TRUE), CR2_A)
+  expect_equal(vcovCR(obj_A, cluster = BodyWeight$Rat, type = "CR2"), CR2_A)
+  expect_equal(vcovCR(obj_A, type = "CR2", inverse_var = TRUE), CR2_A)
   expect_false(identical(vcovCR(obj_A, type = "CR2", inverse_var = FALSE), CR2_A))
   
   target <- targetVariance(obj_A)
@@ -38,8 +38,8 @@ test_that("vcovCR options work for CR2", {
   expect_equal(vcovCR(obj_A, type = "CR2", target = target, inverse_var = FALSE), CR2_A)
   
   CR2_A2 <- vcovCR(obj_A2, type = "CR2")
-  expect_identical(vcovCR(obj_A2, cluster = BodyWeight$Rat, type = "CR2"), CR2_A2)
-  expect_identical(vcovCR(obj_A2, type = "CR2", inverse_var = TRUE), CR2_A2)
+  expect_equal(vcovCR(obj_A2, cluster = BodyWeight$Rat, type = "CR2"), CR2_A2)
+  expect_equal(vcovCR(obj_A2, type = "CR2", inverse_var = TRUE), CR2_A2)
   expect_false(identical(vcovCR(obj_A2, type = "CR2", inverse_var = FALSE), CR2_A2))
   
   target <- targetVariance(obj_A2)
@@ -48,8 +48,8 @@ test_that("vcovCR options work for CR2", {
   expect_equal(vcovCR(obj_A2, type = "CR2", target = target, inverse_var = FALSE), CR2_A2)
   
   CR2_A3 <- vcovCR(obj_A3, type = "CR2")
-  expect_identical(vcovCR(obj_A3, cluster = BodyWeight$Rat, type = "CR2"), CR2_A3)
-  expect_identical(vcovCR(obj_A3, type = "CR2", inverse_var = TRUE), CR2_A3)
+  expect_equal(vcovCR(obj_A3, cluster = BodyWeight$Rat, type = "CR2"), CR2_A3)
+  expect_equal(vcovCR(obj_A3, type = "CR2", inverse_var = TRUE), CR2_A3)
   expect_false(identical(vcovCR(obj_A3, type = "CR2", inverse_var = FALSE), CR2_A3))
   
   target <- targetVariance(obj_A3)
@@ -58,8 +58,8 @@ test_that("vcovCR options work for CR2", {
   expect_equal(vcovCR(obj_A3, type = "CR2", target = target, inverse_var = FALSE), CR2_A3)
 
   CR2_B <- vcovCR(obj_B, type = "CR2")
-  expect_identical(vcovCR(obj_B, cluster = Orthodont$Subject, type = "CR2"), CR2_B)
-  expect_identical(vcovCR(obj_B, type = "CR2", inverse_var = TRUE), CR2_B)
+  expect_equal(vcovCR(obj_B, cluster = Orthodont$Subject, type = "CR2"), CR2_B)
+  expect_equal(vcovCR(obj_B, type = "CR2", inverse_var = TRUE), CR2_B)
   expect_false(identical(vcovCR(obj_B, type = "CR2", inverse_var = FALSE), CR2_B))
   
   target <- targetVariance(obj_B)
@@ -70,8 +70,8 @@ test_that("vcovCR options work for CR2", {
 
 test_that("vcovCR options work for CR4", {
   CR4_A <- vcovCR(obj_A, type = "CR4")
-  expect_identical(vcovCR(obj_A, cluster = BodyWeight$Rat, type = "CR4"), CR4_A)
-  expect_identical(vcovCR(obj_A, type = "CR4", inverse_var = TRUE), CR4_A)
+  expect_equal(vcovCR(obj_A, cluster = BodyWeight$Rat, type = "CR4"), CR4_A)
+  expect_equal(vcovCR(obj_A, type = "CR4", inverse_var = TRUE), CR4_A)
   expect_false(identical(vcovCR(obj_A, type = "CR4", inverse_var = FALSE), CR4_A))
   
   target <- targetVariance(obj_A)
@@ -80,8 +80,8 @@ test_that("vcovCR options work for CR4", {
   expect_equal(vcovCR(obj_A, type = "CR4", target = target, inverse_var = FALSE), CR4_A)
   
   CR4_B <- vcovCR(obj_B, type = "CR4")
-  expect_identical(vcovCR(obj_B, cluster = Orthodont$Subject, type = "CR4"), CR4_B)
-  expect_identical(vcovCR(obj_B, type = "CR4", inverse_var = TRUE), CR4_B)
+  expect_equal(vcovCR(obj_B, cluster = Orthodont$Subject, type = "CR4"), CR4_B)
+  expect_equal(vcovCR(obj_B, type = "CR4", inverse_var = TRUE), CR4_B)
   expect_false(identical(vcovCR(obj_B, type = "CR4", inverse_var = FALSE), CR4_B))
   
   target <- targetVariance(obj_B)
@@ -116,16 +116,17 @@ test_that("clubSandwich works with dropped observations", {
   
   CR_drop <- lapply(CR_types, function(x) vcovCR(obj_dropped, type = x))
   CR_complete <- lapply(CR_types, function(x) vcovCR(obj_complete, type = x))
-  expect_identical(CR_drop, CR_complete)
+  expect_equal(CR_drop, CR_complete)
   
   test_drop <- lapply(CR_types, function(x) coef_test(obj_dropped, vcov = x, test = "All", p_values = FALSE))
   test_complete <- lapply(CR_types, function(x) coef_test(obj_complete, vcov = x, test = "All", p_values = FALSE))
-  expect_identical(test_drop, test_complete)
+  expect_equal(test_drop, test_complete)
 })
 
 
 
 test_that("lme agrees with gls", {
+  
   lme_fit <- lme(weight ~ Time * Diet, data=BodyWeight, ~ 1 | Rat)
   gls_fit <- gls(weight ~ Time * Diet, data=BodyWeight, 
                  correlation = corCompSymm(form = ~ 1 | Rat))
@@ -134,7 +135,7 @@ test_that("lme agrees with gls", {
   CR_gls <- lapply(CR_types, function(x) vcovCR(gls_fit, type = x))
   # max_ratio <- mapply(function(a, b) max(abs(a / b - 1)), CR_lme, CR_gls)
   # expect_true(all(max_ratio < 10^-4))
-  expect_equivalent(CR_lme, CR_gls, tolerance = 10^-6)
+  expect_equivalent(CR_lme, CR_gls, tolerance = 10^-4)
   
   test_lme <- lapply(CR_types, function(x) coef_test(lme_fit, vcov = x, test = "All", p_values = FALSE))
   test_gls <- lapply(CR_types, function(x) coef_test(gls_fit, vcov = x, test = "All", p_values = FALSE))
@@ -142,8 +143,8 @@ test_that("lme agrees with gls", {
   
   constraints <- c(combn(length(coef(lme_fit)), 2, simplify = FALSE),
                    combn(length(coef(lme_fit)), 3, simplify = FALSE))
-  Wald_lme <- Wald_test(lme_fit, constraints = constraints, vcov = "CR2", test = "All")
-  Wald_gls <- Wald_test(gls_fit, constraints = constraints, vcov = "CR2", test = "All")
+  Wald_lme <- Wald_test(lme_fit, constraints = constrain_zero(constraints), vcov = "CR2", test = "All")
+  Wald_gls <- Wald_test(gls_fit, constraints = constrain_zero(constraints), vcov = "CR2", test = "All")
   compare_Waldtests(Wald_lme, Wald_gls)
 })
 
