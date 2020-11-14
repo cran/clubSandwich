@@ -1,3 +1,7 @@
+clubSandwich 0.5.2
+=======================
+* Added mathjaxr to Imports
+
 clubSandwich 0.5.1
 =======================
 * New functionality for impute_covariance_matrix(): 
