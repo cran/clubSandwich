@@ -3,39 +3,55 @@
 # confidence intervals for all model coefficients
 #---------------------------------------------------
 
-#' Calculate confidence intervals for all or selected regression coefficients in a fitted model
+#' Calculate confidence intervals for all or selected regression coefficients in
+#' a fitted model
 #'
-#' \code{conf_int} reports confidence intervals for each coefficient estimate in a fitted
-#' linear regression model, using a sandwich estimator for the standard errors
-#' and a small sample correction for the critical values. The small-sample correction is
-#' based on a Satterthwaite approximation.
+#' \code{conf_int} reports confidence intervals for each coefficient estimate in
+#' a fitted linear regression model, using a sandwich estimator for the standard
+#' errors and a small sample correction for the critical values. The
+#' small-sample correction is based on a Satterthwaite approximation.
 #'
 #' @param obj Fitted model for which to calculate confidence intervals.
-#' @param level Desired coverage level for confidence intervals. 
+#' @param level Desired coverage level for confidence intervals.
+#' @param test Character vector specifying which small-sample corrections to
+#'   calculate. \code{"z"} returns a z test (i.e., using a standard normal
+#'   reference distribution). \code{"naive-t"} returns a t test with \code{m -
+#'   1} degrees of freedom, where \code{m} is the number of unique clusters.
+#'   \code{"naive-tp"} returns a t test with \code{m - p} degrees of freedom,
+#'   where \code{p} is the number of regression coefficients in \code{obj}.
+#'   \code{"Satterthwaite"} returns a Satterthwaite correction. Unlike in
+#'   \code{coef_test()}, \code{"saddlepoint"} is not currently supported in
+#'   \code{conf_int()} because saddlepoint confidence intervals do not have a
+#'   closed-form solution.
+#' @param p_values Logical indicating whether to report p-values. The default
+#'   value is \code{FALSE}.
+
 #' @inheritParams coef_test
-#' 
-#' @return A data frame containing estimated regression coefficients, standard errors, and confidence intervals. 
+#'
+#' @return A data frame containing estimated regression coefficients, standard
+#'   errors, confidence intervals, and (optionally) p-values.
 #'
 #' @seealso \code{\link{vcovCR}}
-#' 
-#' @examples 
+#'
+#' @examples
 #' data("Produc", package = "plm")
 #' lm_individual <- lm(log(gsp) ~ 0 + state + log(pcap) + log(pc) + log(emp) + unemp, data = Produc)
 #' individual_index <- !grepl("state", names(coef(lm_individual)))
 #' conf_int(lm_individual, vcov = "CR2", cluster = Produc$state, coefs = individual_index)
-#' 
+#'
 #' V_CR2 <- vcovCR(lm_individual, cluster = Produc$state, type = "CR2")
 #' conf_int(lm_individual, vcov = V_CR2, level = .99, coefs = individual_index)
 #'
 #' @export
 
-conf_int <- function(obj, vcov, level = .95, test = "Satterthwaite", coefs = "All", ...) {
+conf_int <- function(obj, vcov, level = .95, test = "Satterthwaite", coefs = "All", ..., p_values = FALSE) {
   
   if (level <= 0 | level >= 1) stop("Confidence level must be between 0 and 1.")
   
   beta_full <- coef_CS(obj)
   beta_NA <- is.na(beta_full)
-  
+  p <- sum(!beta_NA)
+    
   which_beta <- get_which_coef(beta_full, coefs)
   
   beta <- beta_full[which_beta & !beta_NA]
@@ -43,7 +59,8 @@ conf_int <- function(obj, vcov, level = .95, test = "Satterthwaite", coefs = "Al
   if (is.character(vcov)) vcov <- vcovCR(obj, type = vcov, ...)
   if (!inherits(vcov, "clubSandwich")) stop("Variance-covariance matrix must be a clubSandwich.")
   
-  all_tests <- c("z","naive-t","Satterthwaite")
+  all_tests <- c("z","naive-t","naive-tp","Satterthwaite")
+  if (test == "saddlepoint") stop("test = 'saddlepoint' is not currently supported  because saddlepoint confidence intervals do not have a closed-form solution.")
   test <- match.arg(test, all_tests, several.ok = FALSE)
 
   SE <- sqrt(diag(vcov))[which_beta[!beta_NA]]
@@ -55,18 +72,26 @@ conf_int <- function(obj, vcov, level = .95, test = "Satterthwaite", coefs = "Al
   df <- switch(test, 
                z = Inf,
                `naive-t` = nlevels(attr(vcov, "cluster")) - 1,
+               `naive-tp` = nlevels(attr(vcov, "cluster")) - p,
                `Satterthwaite` = Satterthwaite(beta = beta, SE = SE, P_array = P_array)$df
   )
 
   crit <- qt(1 - (1 - level) / 2, df = df)
   
   result <- data.frame(
+    Coef = names(beta),
     beta = beta, 
     SE = SE,
     df = df,
     CI_L = beta - SE * crit,
     CI_U = beta + SE * crit
-  )
+   )
+  row.names(result) <- result$Coef
+
+  if (p_values) {
+    t_stat <- result$beta / result$SE
+    result$p_val <- 2 * pt(abs(t_stat), df = result$df, lower.tail = FALSE)
+  }
 
   class(result) <- c("conf_int_clubSandwich", class(result))
   attr(result, "type") <- attr(vcov, "type")
@@ -82,9 +107,13 @@ conf_int <- function(obj, vcov, level = .95, test = "Satterthwaite", coefs = "Al
 
 print.conf_int_clubSandwich <- function(x, digits = 3, ...) {
   lev <- paste0(100 * attr(x, "level"), "%")
-  res <- data.frame("Coef" = rownames(x), x)
-  rownames(res) <- NULL
-  names(res) <- c("Coef", "Estimate", "SE", "d.f.", paste(c("Lower", "Upper"), lev, "CI"))
-  print(format(res, digits = 3))
+  res_names <- c("Coef.", "Estimate", "SE", "d.f.", paste(c("Lower", "Upper"), lev, "CI"))
+  if ("p_val" %in% names(x)) {
+    x$Sig <- cut(x$p_val, breaks = c(0, 0.001, 0.01, 0.05, 0.1, 1), 
+                 labels = c("***", "**", "*", ".", " "), include.lowest = TRUE)
+    x$p_val <- format.pval(x$p_val, digits = digits, eps = 10^-digits)
+    res_names <- c(res_names, "p-value", "Sig.")
+  }
+  names(x) <- res_names
+  print(format(x, digits = 3), row.names = FALSE)
 }
-

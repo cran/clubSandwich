@@ -248,7 +248,7 @@ constrain_pairwise <- function(constraints, coefs, reg_ex = FALSE, with_zero = F
 #'   calculate the variance-covariance.
 #' @param test Character vector specifying which small-sample correction(s) to
 #'   calculate. The following corrections are available: \code{"chi-sq"},
-#'   \code{"Naive-F"}, \code{"HTA"}, \code{"HTB"}, \code{"HTZ"}, \code{"EDF"},
+#'   \code{"Naive-F"}, \code{"Naive-Fp"}, \code{"HTA"}, \code{"HTB"}, \code{"HTZ"}, \code{"EDF"},
 #'   \code{"EDT"}. Default is \code{"HTZ"}.
 #' @param tidy Logical value controlling whether to tidy the test results. If
 #'   \code{constraints} is a list with multiple constraints, the result will
@@ -307,8 +307,10 @@ Wald_test <- function(obj, constraints, vcov, test = "HTZ", tidy = FALSE, ...) {
   if (is.character(vcov)) vcov <- vcovCR(obj, type = vcov, ...)
   if (!inherits(vcov, "clubSandwich")) stop("Variance-covariance matrix must be a clubSandwich.")
   
-  if (all(test == "All")) test <- c("chi-sq","Naive-F","HTA","HTB","HTZ","EDF","EDT")
-  
+  all_tests <- c("chi-sq","Naive-F","Naive-Fp","HTA","HTB","HTZ","EDF","EDT")
+  if (all(test == "All")) test <- all_tests
+  test <- match.arg(test, all_tests, several.ok = TRUE)
+
   beta <- na.omit(coef_CS(obj))
   p <- length(beta)
   
@@ -330,7 +332,7 @@ Wald_test <- function(obj, constraints, vcov, test = "HTZ", tidy = FALSE, ...) {
       stop(paste0("Constraints must be a q X ", p," matrix, a list of such matrices, or a call to a constrain_*() function."))
     }
     
-    results <- lapply(constraints, Wald_testing, beta = beta, vcov = vcov, test = test, GH = GH)
+    results <- lapply(constraints, Wald_testing, beta = beta, vcov = vcov, test = test, p = p, GH = GH)
     
     if (tidy) {
       results <- mapply(
@@ -348,7 +350,7 @@ Wald_test <- function(obj, constraints, vcov, test = "HTZ", tidy = FALSE, ...) {
       stop(paste0("Constraints must be a q X ", p," matrix, a list of such matrices, or a call to a constrain_*() function."))
     }
     
-    results <- Wald_testing(C_mat = constraints, beta = beta, vcov = vcov, test = test, GH = GH) 
+    results <- Wald_testing(C_mat = constraints, beta = beta, vcov = vcov, test = test, p = p, GH = GH) 
   }
   
   results
@@ -361,7 +363,7 @@ array_multiply <- function(mat, arr) {
   array(new_mat, dim = c(nrow(mat), dim(arr)[2], dim(arr)[3]))
 }
 
-Wald_testing <- function(C_mat, beta, vcov, test, GH) {
+Wald_testing <- function(C_mat, beta, vcov, test, p, GH) {
   
   q <- nrow(C_mat)
   dims <- dim(GH$H)
@@ -402,6 +404,14 @@ Wald_testing <- function(C_mat, beta, vcov, test, GH) {
                                delta = 1, df_num = q, df_denom = J - 1, p_val = p_val))
   }
   
+  # Naive F with J - p degrees of freedom
+  if ("Naive-Fp" %in% test) {
+    p_val <- pf(Q / q, df1 = q, df2 = J - p, lower.tail = FALSE)
+    result <- rbind(result, 
+                    data.frame(test = "Naive-F", Fstat = Q / q, 
+                               delta = 1, df_num = q, df_denom = J - p, p_val = p_val))
+  }
+  
   # Hotelling's T-squared
   if ("HTA" %in% test | "HTB" %in% test) {
     Cov_arr <- covariance_array(P_array, Omega_nsqrt, q = q)
@@ -412,8 +422,6 @@ Wald_testing <- function(C_mat, beta, vcov, test, GH) {
     
     if ("HTA" %in% test) {
       nu_A <- 2 * sum(Var_mat) / sum(Cov_arr^2)
-      HTA_res <- 
-      
       result <- rbind(result, data.frame(test = "HTA", Hotelling_Tsq(Q, q, nu = nu_A)))
     } 
     
@@ -522,10 +530,10 @@ total_variance_mat <- function(P_array, Omega_nsqrt, q = nrow(Omega_nsqrt)) {
 #--------------------------------------------------
 
 Hotelling_Tsq <- function(Q, q, nu) {
-  delta <- (nu - q + 1) / nu
+  delta <- pmax((nu - q + 1) / nu, 0)
   df <- nu - q + 1
   Fstat <- delta * Q / q
-  p_val <- ifelse(df > 0, pf(Fstat, df1 = q, df2 = df, lower.tail = FALSE), NA)
+  p_val <- ifelse(df > 0, pf(Fstat, df1 = q, df2 = df, lower.tail = FALSE), as.numeric(NA))
   data.frame(Fstat = Fstat, delta = delta, df_num = q, df_denom = df, p_val = p_val)
 }
 

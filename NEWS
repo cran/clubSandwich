@@ -1,3 +1,18 @@
+clubSandwich 0.5.4
+=======================
+* Wald_test() gains an option for test = "Naive-Fp", which uses denominator degrees of freedom equal to the number of clusters minus the number of coefficients in the fitted model. 
+* coef_test() and conf_int() gain an option for test = "naive-tp", , which uses denominator degrees of freedom equal to the number of clusters minus the number of coefficients in the fitted model.
+* Corrected a bug in the Satterthwaite degrees of freedom calculations for models that include only an intercept.
+* Output of coef_test() and conf_int() now include a variable containing the coefficient names, so that the results are "tidy."
+* conf_int() now includes an option to report a p-value for each coefficient.
+* coef_test() now reports degrees of freedom for test = 'z' and test = 'naive-t'.
+* vcovCR() now provides a more informative error message when the clustering variable is a constant.
+* vcovCR() now handles models estimated using analytic weights, where some weights are equal to zero. Results are consistent with omitting observations with weights of zero.
+* Added more informative error messages for Wald_test() and conf_int(), triggered if the test argument does not match any of the available tests.
+* Corrected a bug in findCluster.rma.mv, which threw an error if a random effects factor in the rma.mv model had unobserved levels.
+* Corrected a bug in Wald_test(), which threw an error for tests of intercept-only models.
+* Fixed a minor bug in print method for Wald_test() results, which threw an error when the p-value was NA.
+
 clubSandwich 0.5.3
 =======================
 * Removed dependency on mathjaxr

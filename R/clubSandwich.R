@@ -27,7 +27,9 @@
 #'   Alternately, setting \code{form = "meat"} will return only the meat of the 
 #'   sandwich and setting \code{form = B}, where \code{B} is a matrix of 
 #'   appropriate dimension, will return the sandwich variance-covariance matrix 
-#'   calculated using \code{B} as the bread.
+#'   calculated using \code{B} as the bread. \code{form = "estfun"} will return the 
+#'   (appropriately scaled) estimating function, the transposed crossproduct of 
+#'   which is equal to the sandwich variance-covariance matrix. 
 #' @param ... Additional arguments available for some classes of objects.
 #'   
 #' @description This is a generic function, with specific methods defined for 
@@ -143,6 +145,23 @@ vcovCR.default <- function(obj, cluster, type, target = NULL, inverse_var = FALS
 # Cluster-robust variance estimator
 #---------------------------------------------
 
+handle_vectors <- function(x, obj) {
+  
+  # Handle omitted observations due to missing outcome or predictors
+  if (inherits(na.action(obj), "omit")) {
+    x <- x[-na.action(obj)]
+  }
+  
+  # Handle observations omitted due to weights of zero
+  if (!is.null(wts <- weights(obj))) {
+    pos_wts <- wts > 0
+    if (!all(pos_wts)) x <- x[pos_wts]
+  }
+  
+  return(x)
+}
+
+
 adjust_est_mats <- function(type, est_mats, adjustments) {
   switch(type,
          CR0 = est_mats,
@@ -154,8 +173,13 @@ adjust_est_mats <- function(type, est_mats, adjustments) {
          CR4 = Map(function(e, a) a %*% e, e = est_mats, a = adjustments))
 }
 
-# uses methods residuals_CS(), model_matrix(), weightMatrix(), 
-# targetVariance(), bread(), v_scale()
+# uses methods:
+#   residuals_CS(), 
+#   model_matrix(), 
+#   weightMatrix(), 
+#   targetVariance(), 
+#   bread(), 
+#   v_scale()
 
 vcov_CR <- function(obj, cluster, type, target = NULL, inverse_var = FALSE, form = "sandwich", ignore_FE = FALSE) {
   
@@ -170,17 +194,22 @@ vcov_CR <- function(obj, cluster, type, target = NULL, inverse_var = FALSE, form
   p <- NCOL(X)
   N <- NROW(X)
   
-  if (length(cluster) != N) {
-    if (class(na.action(obj)) == "omit") {
-      cluster <- droplevels(cluster[-na.action(obj)])
-    } else {
-      stop("Clustering variable must have length equal to nrow(model_matrix(obj)).")
+  cluster_length <- length(cluster)
+  
+  if (cluster_length != N) {
+    
+    cluster <- droplevels(handle_vectors(cluster, obj))
+    
+    if (length(cluster) != N) {
+      stop("Clustering variable must have length equal to the number of rows in the data used to fit obj.")
     }
+
   } 
   
   if (any(is.na(cluster))) stop("Clustering variable cannot have missing values.")
   
   J <- nlevels(cluster)
+  if (J < 2) stop("Cluster-robust variance estimation will not work when the data only includes a single cluster.")
   
   X_list <- matrix_list(X, cluster, "row")
   W_list <- weightMatrix(obj, cluster)
@@ -194,6 +223,9 @@ vcov_CR <- function(obj, cluster, type, target = NULL, inverse_var = FALSE, form
     }
   } else {
     if (!is.list(target)) {
+      if (length(target) != N) {
+        target <- handle_vectors(target, obj)
+      }
       Theta_list <- matrix_list(target, cluster, "both")
     } else {
       Theta_list <- target
@@ -230,6 +262,12 @@ vcov_CR <- function(obj, cluster, type, target = NULL, inverse_var = FALSE, form
   v_scale <- v_scale(obj)
   w_scale <- attr(W_list, "w_scale")
   if (is.null(w_scale)) w_scale <- 1L
+  
+  if (form == "estfun") {
+    bread <- sandwich::bread(obj)
+    estfun <- bread %*% components
+    return(estfun * (w_scale / v_scale))
+  }
   
   meat <- tcrossprod(components) * w_scale^2 / v_scale
   

@@ -4,13 +4,14 @@ set.seed(20190513)
 m <- 8
 cluster <- factor(rep(LETTERS[1:m], 3 + rpois(m, 5)))
 n <- length(cluster)
+const <- rep("whuzzup.", n)
 X <- matrix(rnorm(3 * n), n, 3)
 nu <- rnorm(m)[cluster]
 e <- rnorm(n)
 w <- rgamma(n, shape = 3, scale = 3)
 y <- X %*% c(.4, .3, -.3) + nu + e
 
-dat <- data.frame(y, X, cluster, w, row = 1:n)
+dat <- data.frame(y, X, cluster, const, w, row = 1:n)
 
 lm_fit <- lm(y ~ X1 + X2 + X3, data = dat)
 WLS_fit <- lm(y ~ X1 + X2 + X3, data = dat, weights = w)
@@ -240,5 +241,166 @@ test_that("weight scale doesn't matter", {
   expect_equal(lapply(unweighted_fit, as.matrix), 
                lapply(weighted_fit, as.matrix), 
                tol = 5 * 10^-7)  
+  
+})
+
+test_that("clubSandwich works with weights of zero.", {
+  
+  data("LifeCycleSavings")
+  n_life <- nrow(LifeCycleSavings)
+  LifeCycleSavings$cl <- substr(rownames(LifeCycleSavings), 1, 1)
+  table(LifeCycleSavings$cl)
+  LifeCycleSavings$wt <- rpois(n_life, lambda = 0.8)
+  table(LifeCycleSavings$wt)
+  
+  lm_full <- lm(sr ~ pop15 + pop75 + dpi + ddpi, data = LifeCycleSavings, weights = wt)
+  LCS_sub <- subset(LifeCycleSavings, wt > 0)
+  lm_sub <- lm(sr ~ pop15 + pop75 + dpi + ddpi, data = LCS_sub, weights = wt)
+  
+  CR_full <- lapply(CR_types, function(x) vcovCR(lm_full, cluster = LifeCycleSavings$cl, type = x))
+  CR_sub <- lapply(CR_types, function(x) vcovCR(lm_sub, cluster = LCS_sub$cl, type = x))
+  expect_equal(CR_full, CR_sub, check.attributes = FALSE)
+  
+  test_full <- lapply(CR_types, function(x) coef_test(lm_full, vcov = x, cluster = LifeCycleSavings$cl, test = c("z","naive-t","Satterthwaite"), p_values = TRUE))
+  test_sub <- lapply(CR_types, function(x) coef_test(lm_sub, vcov = x, cluster = LCS_sub$cl, test = c("z","naive-t","Satterthwaite"), p_values = TRUE))
+  expect_equal(test_full, test_sub, check.attributes = FALSE)
+  
+  dat_miss <- LifeCycleSavings
+  miss_indicator <- sample.int(n_life, size = round(n_life / 5))
+  dat_miss$pop15[miss_indicator] <- NA
+  dat_miss$cl[miss_indicator] <- NA
+  with(dat_miss, table(wt, is.na(pop15)))
+  
+  lm_dropped <- lm(sr ~ pop15 + pop75 + dpi + ddpi, data = dat_miss, weights = wt)
+  dat_complete <- subset(dat_miss, !is.na(pop15))
+  lm_complete <- lm(sr ~ pop15 + pop75 + dpi + ddpi, data = dat_complete, weights = wt)
+  
+  CR_drop <- lapply(CR_types, function(x) vcovCR(lm_dropped, cluster = dat_miss$cl, type = x))
+  CR_complete <- lapply(CR_types, function(x) vcovCR(lm_complete, cluster = dat_complete$cl, type = x))
+  expect_equal(CR_drop, CR_complete)
+  
+  test_drop <- lapply(CR_types, function(x) coef_test(lm_dropped, vcov = x, cluster = dat_miss$cl, test = "All", p_values = FALSE))
+  test_complete <- lapply(CR_types, function(x) coef_test(lm_complete, vcov = x, cluster = dat_complete$cl, test = "All", p_values = FALSE))
+  expect_equal(test_drop, test_complete)
+  
+})
+
+test_that("vcovCR errors when there is only one cluster.", {
+  
+  single_cluster_error_msg <- "Cluster-robust variance estimation will not work when the data only includes a single cluster."
+  
+  expect_error(
+    vcovCR(lm_fit, cluster = dat$const, type = "CR0"), 
+    single_cluster_error_msg
+  )
+  
+  expect_error(
+    conf_int(WLS_fit, vcov = "CR1", cluster = dat$const), single_cluster_error_msg
+  )
+  
+  expect_error(
+    coef_test(lm_fit, vcov = "CR2", cluster = dat$const), single_cluster_error_msg
+  )
+  
+  expect_error(
+    Wald_test(WLS_fit, constraints = constrain_zero(2:4), 
+              vcov = "CR3", cluster = dat$const),
+    single_cluster_error_msg
+  )
+  
+})
+
+
+test_that("vcovCR works with intercept-only model and user-specified weights.", {
+  
+  lm_int <- lm(y ~ 1, data = dat)
+  HC_un <- coef_test(lm_int, vcov="CR2", cluster=dat$row, test = "All")
+  
+  # Unweighted, HC-robust
+  N <- nobs(lm_int)
+  yi <- dat$y
+  wi <- rep(1, N)
+  W <- sum(wi)
+  wi <- wi / W
+  vi <- rep(1, N)
+  V <- sum(vi)
+  ei <- residuals_CS(lm_int)
+  M <- sum(wi^2 * vi)
+  ai <- 1 / sqrt(1 - 2 * wi + M / vi)
+  V_hand <- sum(wi^2 * ai^2 * ei^2)
+  pi_theta_pj <- diag(vi) - tcrossprod(rep(1,N), wi * vi) - tcrossprod(wi * vi, rep(1, N)) + M
+  df <- M^2 / sum(tcrossprod(ai^2 * wi^2) * (pi_theta_pj^2))
+  
+  expect_true(check_bread(lm_int, cluster = dat$row, y = dat$y))
+  expect_true(check_CR(lm_int, vcov = "CR2", cluster = dat$row))
+  expect_equal(sqrt(V_hand), HC_un$SE)
+  expect_equal(df, HC_un$df_Satt)
+  expect_equal(Inf, HC_un$df_z)
+  expect_equal(N - 1, HC_un$df_t)
+  
+
+  # Unweighted, cluster-robust
+  CR_un <- coef_test(lm_int, vcov="CR2", cluster=dat$cluster, test = "All")
+
+  J <- nlevels(dat$cluster)
+  w_j <- tapply(wi, dat$cluster, sum)
+  e_j <- tapply(wi * ei, dat$cluster, sum) / w_j
+  v_j <- tapply(wi^2 * vi, dat$cluster, sum) / w_j^2
+  a_j <- 1 / sqrt(1 - 2 * w_j + M / v_j)
+  V_hand <- sum(w_j^2 * a_j^2 * e_j^2)
+  pi_theta_pj <- diag(v_j) - tcrossprod(rep(1,J), w_j * v_j) - tcrossprod(w_j * v_j, rep(1, J)) + M
+  df <- M^2 / sum(tcrossprod(a_j^2 * w_j^2) * (pi_theta_pj^2))
+  
+  expect_true(check_bread(lm_int, cluster = dat$cluster, y = dat$y))
+  expect_true(check_CR(lm_int, vcov = "CR2", cluster = dat$cluster))
+  expect_equal(sqrt(V_hand), CR_un$SE)
+  expect_equal(df, CR_un$df_Satt)
+  expect_equal(Inf, CR_un$df_z)
+  expect_equal(J - 1, CR_un$df_t)
+
+  
+  # Weighted, HC-robust  
+  WLS_int <- lm(y ~ 1, data = dat, weights = w)
+  HC_wt <- coef_test(WLS_int, vcov="CR2", cluster=dat$row, test = "All")
+  
+  N <- nobs(WLS_int)
+  yi <- dat$y
+  wi <- WLS_int$weights
+  W <- sum(wi)
+  wi <- wi / W
+  vi <- rep(1, N)
+  V <- sum(vi)
+  ei <- residuals_CS(WLS_int)
+  M <- sum(wi^2 * vi)
+  ai <- 1 / sqrt(1 - 2 * wi + M / vi)
+  V_hand <- sum(wi^2 * ai^2 * ei^2)
+  pi_theta_pj <- diag(vi) - tcrossprod(rep(1,N), wi * vi) - tcrossprod(wi * vi, rep(1, N)) + M
+  df <- M^2 / sum(tcrossprod(ai^2 * wi^2) * (pi_theta_pj^2))
+  
+  expect_true(check_bread(WLS_int, cluster = dat$row, y = dat$y))
+  expect_true(check_CR(WLS_int, vcov = "CR2", cluster = dat$row))
+  expect_equal(sqrt(V_hand), HC_wt$SE)
+  expect_equal(df, HC_wt$df_Satt)
+  expect_equal(Inf, HC_wt$df_z)
+  expect_equal(N - 1, HC_wt$df_t)
+  
+  # Weighted, cluster-robust
+  CR_wt <- coef_test(WLS_int, vcov="CR2", cluster=dat$cluster, test = "All")
+  
+  J <- nlevels(dat$cluster)
+  w_j <- tapply(wi, dat$cluster, sum)
+  e_j <- tapply(wi * ei, dat$cluster, sum) / w_j
+  v_j <- tapply(wi^2 * vi, dat$cluster, sum) / w_j^2
+  a_j <- 1 / sqrt(1 - 2 * w_j + M / v_j)
+  V_hand <- sum(w_j^2 * a_j^2 * e_j^2)
+  pi_theta_pj <- diag(v_j) - tcrossprod(rep(1,J), w_j * v_j) - tcrossprod(w_j * v_j, rep(1, J)) + M
+  df <- M^2 / sum(tcrossprod(a_j^2 * w_j^2) * (pi_theta_pj^2))
+  
+  expect_true(check_bread(WLS_int, cluster = dat$cluster, y = dat$y))
+  expect_true(check_CR(WLS_int, vcov = "CR2", cluster = dat$cluster))
+  expect_equal(sqrt(V_hand), CR_wt$SE, tolerance = 10^-3)
+  expect_equal(df, CR_wt$df_Satt, tolerance = 10^-3)
+  expect_equal(Inf, CR_wt$df_z)
+  expect_equal(J - 1, CR_wt$df_t)
   
 })

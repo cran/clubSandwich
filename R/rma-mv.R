@@ -386,7 +386,7 @@ vcovCR.rma.mv <- function(obj, cluster, type, target, inverse_var, form = "sandw
     } 
     
     nested <- test_nested(cluster, fac = mod_struct$cluster_dat)
-    if (!all(nested)) stop("Random effects are not nested within clustering")
+    if (!all(nested)) stop("Random effects are not nested within clustering variable.")
   }
   
   if (missing(target)) {
@@ -408,6 +408,8 @@ vcovCR.rma.mv <- function(obj, cluster, type, target, inverse_var, form = "sandw
 # Get (model-based) working variance matrix 
 #-------------------------------------
 
+#' @export
+
 targetVariance.rma.mv <- function(obj, cluster) {
   matrix_list(obj$M, cluster, "both")
 }
@@ -415,6 +417,8 @@ targetVariance.rma.mv <- function(obj, cluster) {
 #-------------------------------------
 # Get weighting matrix
 #-------------------------------------
+
+#' @export
 
 weightMatrix.rma.mv <- function(obj, cluster) {
   if (is.null(obj$W)) {
@@ -481,12 +485,35 @@ parse_structure <- function(obj) {
     mf_all <- do.call(cbind, mf_r)
     mf_s <- mf_all[obj$s.names]
     cluster_dat <- cbind(cluster_dat, mf_s)
+    cluster_dat <- droplevels(cluster_dat)
   }
   
   list(level_dat = level_dat, cluster_dat = cluster_dat)
 }
 
+#' Detect cluster structure of an rma.mv object
+#' 
+#' \code{findCluster.rma.mv} returns a vector of ID variables for the highest level of clustering in a fitted \code{rma.mv} model.
+#' 
+#' @param obj A fitted \code{rma.mv} object.
+#'   
+#' @return A a vector of ID variables for the highest level of clustering in \code{obj}.
+#'   
+#' @export
+#' 
+#' @examples
+#' library(metafor)
+#' data(hierdat, package = "robumeta")
+#' 
+#' mfor_fit <- rma.mv(effectsize ~ binge + followup + sreport + age, 
+#'                  V = var, random = list(~ 1 | esid, ~ 1 | studyid),
+#'                  data = hierdat)
+#' findCluster.rma.mv(mfor_fit)
+#' 
+
 findCluster.rma.mv <- function(obj) {
+  
+  if (!inherits(obj, "rma.mv")) stop("`obj` must be a fitted rma.mv model.")
   
   if (obj$withR) stop("vcovCR.rma.mv() does not work with fixed correlation matrices in the R argument.")
   
@@ -513,17 +540,32 @@ findCluster.rma.mv <- function(obj) {
 # Get bread matrix and scaling constant
 #---------------------------------------
 
+#' @export
+
 bread.rma.mv <- function(x, ...) {
-  if (is.null(x$W)) {
-    B <- vcov(x) * nobs(x)
-  } else{
+
+  if (inherits(x, "robust.rma")) {
+    cluster <- findCluster.rma.mv(x)
+    W <- weightMatrix(x, cluster = cluster)
     X_mat <- model_matrix(x)
-    XWX <- t(X_mat) %*% x$W %*% X_mat
-    B <- chol2inv(chol(XWX)) * nobs(x)
-    rownames(B) <- colnames(B) <- colnames(X_mat)
+    X_list <- matrix_list(X_mat, fac = cluster, dim = "row")
+    XWX_list <- Map(function(x, w) t(x) %*% w %*% x, x = X_list, w = W)
+    XWX <- Reduce(`+`, XWX_list)
+  } else {
+    if (is.null(x$W)) {
+      B <- vcov(x) * nobs(x)
+      return(B)      
+    } else {
+      X_mat <- model_matrix(x)
+      XWX <- t(X_mat) %*% x$W %*% X_mat
+    }
   }
-  B
+  B <- chol2inv(chol(XWX)) * nobs(x)
+  rownames(B) <- colnames(B) <- colnames(X_mat)
+  return(B)
 }
+
+#' @export
 
 v_scale.rma.mv <- function(obj) {
   nobs(obj)

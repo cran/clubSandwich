@@ -60,7 +60,7 @@ test_that("coefs argument works", {
   
   tests_A <- apply(which_grid[-1,], 1, function(x) tests_all[x,])
   tests_B <- apply(which_grid[-1,], 1, function(x) coef_test(lm_fit, vcov = "CR0", cluster = dat$cluster, test = "All", coefs = x, p_values = FALSE))
-  expect_equal(tests_A, tests_B)
+  expect_equal(tests_A, tests_B, check.attributes = FALSE)
 })
 
 test_that("printing works", {
@@ -68,6 +68,18 @@ test_that("printing works", {
   lm_fit <- lm(y ~ X_btw + X_wth, data = dat)
   t_tests <- coef_test(lm_fit, vcov = "CR2", cluster = dat$cluster, test = "All")
   expect_output(print(t_tests))
+
+  expect_equal(t_tests$df_z, rep(Inf, 4L))
+  expect_equal(t_tests$df_t, rep(14L, 4L))
+  expect_true(all(t_tests$df_t >= round(t_tests$df_Satt,1)))
+  
+  t_names <- names(print(t_tests))
+  expect_identical(t_names, c("Coef.","Estimate","SE","t-stat",
+                              "d.f. (z)", "p-val (z)", "Sig.",
+                              "d.f. (naive-t)", "p-val (naive-t)","Sig.",
+                              "d.f. (naive-tp)", "p-val (naive-tp)","Sig.",
+                              "d.f. (Satt)", "p-val (Satt)", "Sig.",
+                              "s.p.", "p-val (Saddle)", "Sig."))
 })
 
 test_that("p-values are ordered", {

@@ -260,7 +260,20 @@ test_that("clubSandwich works with complicated random effects specifications.", 
   m9 <- update(m5, struct = c("UN","CS"))
   m10 <- update(m5, struct = c("CS","UN"))
   
-  mod_list <- list(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10)
+  m11 <- rma.mv(
+    R ~ 0 + IAT.Focus + Crit.ID, V = V,
+    data = oswald2013,
+    random = list(~ 1  + Crit.ID | Study),
+    struct = c("GEN")
+  )
+  
+  m12 <- update(m11, random = list(~ 1  + Crit.ID | Study, ~ 1 | SSID))
+  m13 <- update(m11, random = list(~ 1  + Crit.ID | Study, ~ IAT.Focus | SSID),
+                struct = c("GEN","UN"))
+  m14 <- update(m11, random = list(~ IAT.Focus | Study, ~ 1 + Crit.ID | SSID),
+                struct = c("UN","GEN"))
+  
+  mod_list <- list(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14)
   os_cluster <- factor(oswald2013$Study)
   
   obj <- m6
@@ -278,6 +291,25 @@ test_that("clubSandwich works with complicated random effects specifications.", 
 
   m11 <- update(m1, R = list(SSID = R_mat))
   expect_error(findCluster.rma.mv(m11))
+  
+})
+
+test_that("clubSandwich works for random slopes model.", {
+  
+  # example from https://wviechtb.github.io/metadat/reference/dat.obrien2003.html
+  dat <- dat.obrien2003
+  dat$bmicent <- dat$bmi - ave(dat$bmi, dat$study)
+  dat <- escalc(measure="PR", xi=cases, ni=total, data=dat)
+  dat$yi <- dat$yi*100
+  dat$vi <- dat$vi*100^2
+  res <- rma.mv(yi, vi, mods = ~ bmicent, 
+                random = ~ bmicent | study, struct="GEN", 
+                data=dat)
+  
+  cl <- findCluster.rma.mv(res)
+  
+  expect_true(check_bread(res, cluster = cl, y = dat$yi))
+  expect_true(check_CR(res, vcov = "CR2"))
   
 })
 
@@ -320,5 +352,180 @@ test_that("clubSandwich works for correlated hierarchical effects model.", {
   expect_equal(V_CR2s, V_CR2s_clust)
   expect_equal(V_CR2s$studyes, V_CR2s$study_es)
   expect_equal(V_CR2s$studyes, V_CR2s$es_study)
+  
+})
+
+test_that("vcovCR errors when there is only one cluster.", {
+  
+  dat <- data.frame(
+    study = "study1", # study number
+    est = runif(5, 0.1, 0.6), # R-squared values
+    se = runif(5, 0.005, 0.025), # standard errors of R-squared values
+    es_id = 1:5 # effect size ID
+  )
+  
+  v_mat <- impute_covariance_matrix(dat$se^2, cluster = dat$study, r = 0.8)
+  
+  # working model in metafor
+  expect_warning(
+    res <- rma.mv(yi = est, V = v_mat, random = ~ 1 | study / es_id, data = dat)
+  )
+
+  single_cluster_error_msg <- "Cluster-robust variance estimation will not work when the data only includes a single cluster."
+
+  expect_error(
+    vcovCR(res, type = "CR0"), single_cluster_error_msg
+  )
+
+  expect_error(
+    conf_int(res, vcov = "CR1"), single_cluster_error_msg
+  )
+  
+  expect_error(
+    coef_test(res, vcov = "CR2"), single_cluster_error_msg
+  )
+  
+  expect_error(
+    Wald_test(res, constraints = constrain_zero(1), vcov = "CR3"),
+    single_cluster_error_msg
+  )
+  
+  expect_error(
+    vcovCR(res, cluster = dat$es_id),
+    "Random effects are not nested within clustering variable."
+  )
+  
+})
+
+
+test_that("clubSandwich works when random effects variable has missing levels.",{
+  
+  dat <- dat.konstantopoulos2011
+  dat$district_fac <- factor(dat$district)
+  dat$district_fac_plus <- factor(dat$district, levels = c(levels(dat$district_fac), 1000, 10000))
+  
+  mlma_fac <- rma.mv(yi ~ year, V = vi, 
+                     random = ~ 1 | district_fac / study,
+                     sparse = TRUE, data = dat)
+  
+  implicit_fac <- coef_test(mlma_fac, vcov = "CR2")
+  explicit_fac <- coef_test(mlma_fac, vcov = "CR2", cluster = dat$district_fac)
+  expect_equal(implicit_fac, explicit_fac)
+
+  mlma_plus <- rma.mv(yi ~ year, V = vi, 
+                     random = ~ 1 | district_fac_plus / study,
+                     sparse = TRUE, data = dat)
+  
+  implicit_plus <- coef_test(mlma_plus, vcov = "CR2")
+  explicit_plus <- coef_test(mlma_plus, vcov = "CR2", cluster = dat$district_fac_plus)
+  expect_equal(implicit_plus, explicit_plus)
+  expect_equal(implicit_fac, implicit_plus)
+  expect_equal(implicit_fac, explicit_plus)
+  
+  mlma_num <- rma.mv(yi ~ year, V = vi, 
+                     random = ~ 1 | district / study,
+                     sparse = TRUE, data = dat)
+  
+  implicit_num <- coef_test(mlma_num, vcov = "CR2")
+  explicit_num <- coef_test(mlma_num, vcov = "CR2", cluster = dat$district)
+  expect_equal(implicit_num, explicit_num)
+  expect_equal(implicit_fac, implicit_num)
+  expect_equal(implicit_fac, explicit_num)
+  
+})
+
+Vmat <- with(corrdat, impute_covariance_matrix(vi = var, cluster = studyid, r = 0.8))
+corr_meta <- rma.mv(effectsize ~ males + college + binge, data = corrdat, 
+                    V = Vmat, random = ~ 1 | studyid)
+
+test_that("clubSandwich agrees with metafor::robust() for CR0.", {
+  
+  test_CR0 <- coef_test(corr_meta, vcov = "CR0", test = "All")
+  meta_CR0 <- robust(corr_meta, cluster = corrdat$studyid, adjust = FALSE)
+  rob_CR0 <- coef_test(meta_CR0, vcov = "CR0", test = "All")
+  expect_equal(test_CR0$SE, meta_CR0$se)
+  expect_equal(test_CR0$df_tp, rep(meta_CR0$df, length(test_CR0$df_tp)))
+  expect_equal(test_CR0$p_tp, meta_CR0$pval)
+  expect_equal(rob_CR0, test_CR0)
+  
+  club_F_CR0 <- Wald_test(corr_meta, constraints = constrain_zero(2:4), 
+                          vcov = "CR0", test = "Naive-Fp")
+  rob_F_CR0 <- Wald_test(meta_CR0, constraints = constrain_zero(2:4), 
+                         vcov = "CR0", test = "Naive-Fp")
+  expect_equal(club_F_CR0$Fstat, meta_CR0$QM)
+  expect_equal(club_F_CR0$df_num, meta_CR0$QMdf[1])
+  expect_equal(club_F_CR0$df_denom, meta_CR0$QMdf[2])
+  expect_equal(club_F_CR0$p_val, meta_CR0$QMp)
+  expect_equal(club_F_CR0, rob_F_CR0)
+  
+})
+
+test_that("clubSandwich agrees with metafor::robust() for CR1p.", {
+  
+  test_CR1 <- coef_test(corr_meta, vcov = "CR1p", test = "All")
+  meta_CR1 <- robust(corr_meta, cluster = corrdat$studyid, adjust = TRUE)
+  rob_CR1 <- coef_test(meta_CR1, vcov = "CR1p", test = "All")
+  expect_equal(test_CR1$SE, meta_CR1$se)
+  expect_equal(test_CR1$df_tp, rep(meta_CR1$df, length(test_CR1$df_tp)))
+  expect_equal(test_CR1$p_tp, meta_CR1$pval)
+  expect_equal(rob_CR1, test_CR1)
+  
+  club_F_CR1 <- Wald_test(corr_meta, constraints = constrain_zero(2:4), 
+                          vcov = "CR1p", test = "Naive-Fp")
+  rob_F_CR1 <- Wald_test(meta_CR1, constraints = constrain_zero(2:4), 
+                         vcov = "CR1p", test = "Naive-Fp")
+  expect_equal(club_F_CR1$Fstat, meta_CR1$QM)
+  expect_equal(club_F_CR1$df_num, meta_CR1$QMdf[1])
+  expect_equal(club_F_CR1$df_denom, meta_CR1$QMdf[2])
+  expect_equal(club_F_CR1$p_val, meta_CR1$QMp)
+  expect_equal(club_F_CR1, rob_F_CR1)
+  
+})
+
+test_that("clubSandwich agrees with metafor::robust() for CR2.", {
+  
+  skip_if(packageVersion('metafor') < "3.1.31")
+  test_CR2 <- coef_test(corr_meta, vcov = "CR2", test = "All")
+  meta_CR2 <- robust(corr_meta, cluster = corrdat$studyid, clubSandwich = TRUE)
+  rob_CR2 <- coef_test(meta_CR2, vcov = "CR2", test = "All")
+  expect_equal(test_CR2$SE, meta_CR2$se)
+  expect_equal(rob_CR2, test_CR2)
+  
+  club_F_CR2 <- Wald_test(corr_meta, constraints = constrain_zero(2:4), 
+                          vcov = "CR2", test = "All")
+  rob_F_CR2 <- Wald_test(meta_CR2, constraints = constrain_zero(2:4), 
+                         vcov = "CR2", test = "All")
+  expect_equal(subset(club_F_CR2, test == "HTZ")$Fstat, meta_CR2$QM)
+  expect_equal(subset(club_F_CR2, test == "HTZ")$df_num, meta_CR2$QMdf[1])
+  expect_equal(subset(club_F_CR2, test == "HTZ")$df_denom, meta_CR2$QMdf[2])
+  expect_equal(subset(club_F_CR2, test == "HTZ")$p_val, meta_CR2$QMp)
+  expect_equal(club_F_CR2, rob_F_CR2)
+})
+
+test_that("clubSandwich methods work on robust.rma objects.", {
+  
+  hier_robust <- robust(hier_meta, cluster = hierdat$studyid, adjust = TRUE)
+  
+  expect_equal(residuals_CS(hier_meta), residuals_CS(hier_robust))
+  expect_equal(coef_CS(hier_meta), coef_CS(hier_robust))
+  expect_equal(model_matrix(hier_meta), model_matrix(hier_robust))
+  expect_equal(bread(hier_meta), bread(hier_robust))
+  expect_equal(v_scale(hier_meta), v_scale(hier_robust))
+  expect_equal(targetVariance(hier_meta, cluster = hierdat$studyid), 
+               targetVariance(hier_robust, cluster = hierdat$studyid))
+  expect_equal(weightMatrix(hier_meta, cluster = hierdat$studyid), 
+               weightMatrix(hier_robust, cluster = hierdat$studyid))
+  
+  hier_club <- robust(hier_meta, cluster = hierdat$studyid, adjust = FALSE, clubSandwich = TRUE)
+  
+  expect_equal(residuals_CS(hier_meta), residuals_CS(hier_club))
+  expect_equal(coef_CS(hier_meta), coef_CS(hier_club))
+  expect_equal(model_matrix(hier_meta), model_matrix(hier_club))
+  expect_equal(bread(hier_meta), bread(hier_club))
+  expect_equal(v_scale(hier_meta), v_scale(hier_club))
+  expect_equal(targetVariance(hier_meta, cluster = hierdat$studyid), 
+               targetVariance(hier_club, cluster = hierdat$studyid))
+  expect_equal(weightMatrix(hier_meta, cluster = hierdat$studyid), 
+               weightMatrix(hier_club, cluster = hierdat$studyid))
   
 })

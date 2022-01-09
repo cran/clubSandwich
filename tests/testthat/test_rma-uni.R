@@ -35,7 +35,6 @@ hier_robu <- robu(effectsize ~ binge + followup + sreport + age,
                    var.eff.size = var, userweights = wt)
 
 test_that("CR2 t-tests agree with robumeta for user weighting", {
-  skip("Skip until robumeta discrepancies resolved.")
   
   robu_CR2_iv <- vcovCR(hier_meta, type = "CR2", cluster = hierdat$studyid)
   robu_CR2_not <- vcovCR(hier_meta, type = "CR2", cluster = hierdat$studyid,
@@ -49,9 +48,9 @@ test_that("CR2 t-tests agree with robumeta for user weighting", {
   expect_that(all.equal(hier_robu$VR.r, as.matrix(robu_CR2_iv)), is_a("character"))
   expect_equivalent(hier_robu$VR.r, as.matrix(robu_CR2_not))
   
-  CR2_ttests <- coef_test(hier_meta, vcov = robu_CR2_not, test = "Satterthwaite")
-  expect_equal(hier_robu$dfs, CR2_ttests$df)
-  expect_equal(hier_robu$reg_table$prob, CR2_ttests$p_Satt)
+  # CR2_ttests <- coef_test(hier_meta, vcov = robu_CR2_not, test = "Satterthwaite")
+  # expect_equal(hier_robu$dfs, CR2_ttests$df)
+  # expect_equal(hier_robu$reg_table$prob, CR2_ttests$p_Satt)
 })
 
 test_that("bread works", {
@@ -141,3 +140,189 @@ test_that("vcovCR options work for CR2", {
   expect_false(identical(vcovCR(hier_meta, type = "CR2", cluster = hierdat$studyid, target = hierdat$var), CR2_not))
 })
 
+
+test_that("vcovCR works with intercept-only model and user-specified weights.", {
+  
+  dat <- escalc(measure="RR", ai=tpos, bi=tneg, ci=cpos, di=cneg, data=dat.bcg)
+  dat$wt <- sample(1:3, size = nrow(dat), replace = TRUE)
+  
+  res <- rma(yi, vi, weights = wt, data=dat)
+  
+  meta_rob <- robust(res, cluster=dat$trial)
+  club_rob <- coef_test(res, vcov="CR1", cluster=dat$trial, test = "naive-t")
+  expect_equal(meta_rob$se, club_rob$SE)
+  expect_equal(meta_rob$zval, club_rob$tstat)
+  expect_equal(meta_rob$dfs, club_rob$df_t)
+  expect_equal(meta_rob$pval, club_rob$p_t)
+  
+  expect_true(check_CR(res, vcov = "CR2", cluster = dat$trial))
+  test_uni <- coef_test(res, vcov="CR2", cluster=dat$trial, test = "All")
+  
+  
+  res <- rma.mv(yi, vi, W = wt, random = ~ 1 | trial, data=dat) 
+  meta_rob <- robust(res, cluster=dat$trial)
+  club_rob <- coef_test(res, vcov="CR1", test = "naive-t")
+  expect_equal(meta_rob$se, club_rob$SE)
+  expect_equal(meta_rob$zval, club_rob$tstat)
+  expect_equal(meta_rob$dfs, club_rob$df_t)
+  expect_equal(meta_rob$pval, club_rob$p_t)
+  
+  expect_true(check_CR(res, vcov = "CR2"))
+  test_mv <- coef_test(res, vcov="CR2", test = "All")
+  
+  expect_equal(test_uni, test_mv, tolerance = 10^-5)
+
+  V_club <- vcovCR(res, type = "CR2")
+  k <- res$k
+  yi <- res$yi
+  wi <- diag(res$W)
+  W <- sum(wi)
+  wi <- wi / W
+  vi <- diag(res$M)
+  V <- sum(vi)
+  ei <- residuals_CS(res)
+  M <- sum(wi^2 * vi)
+  ai <- 1 / sqrt(1 - 2 * wi + M / vi)
+  V_hand <- sum(wi^2 * ai^2 * ei^2)
+  expect_equal(V_hand, as.numeric(V_club))
+  
+  pi_theta_pj <- diag(vi) - tcrossprod(rep(1,k), wi * vi) - tcrossprod(wi * vi, rep(1, k)) + M
+  df <- M^2 / sum(tcrossprod(ai^2 * wi^2) * (pi_theta_pj^2))
+  
+  expect_equal(Inf, test_uni$df_z)
+  expect_equal(k - 1, test_uni$df_t)
+  expect_equal(df, test_uni$df_Satt, tolerance = 10^-5)
+  
+})
+
+test_that("clubSandwich agrees with metafor::robust() for CR0.", {
+  
+  test_CR0 <- conf_int(corr_meta, vcov = "CR0", cluster = corrdat$studyid, test = "naive-tp", p_values = TRUE)
+  meta_CR0 <- robust(corr_meta, cluster = corrdat$studyid, adjust = FALSE)
+  rob_CR0 <- conf_int(meta_CR0, vcov = "CR0", cluster = corrdat$studyid, test = "naive-tp", p_values = TRUE)
+  expect_equal(test_CR0$SE, meta_CR0$se)
+  expect_equal(test_CR0$df, rep(meta_CR0$df, length(test_CR0$df)))
+  expect_equal(rob_CR0, test_CR0)
+
+  club_F_CR0 <- Wald_test(corr_meta, constraints = constrain_zero(2:4), 
+                          vcov = "CR0", cluster = corrdat$studyid, test = "Naive-Fp")
+  rob_F_CR0 <- Wald_test(meta_CR0, constraints = constrain_zero(2:4), 
+                         vcov = "CR0", cluster = corrdat$studyid, test = "Naive-Fp")
+  expect_equal(club_F_CR0$Fstat, meta_CR0$QM)
+  expect_equal(club_F_CR0$df_num, meta_CR0$QMdf[1])
+  expect_equal(club_F_CR0$df_denom, meta_CR0$QMdf[2])
+  expect_equal(club_F_CR0$p_val, meta_CR0$QMp)
+  expect_equal(club_F_CR0, rob_F_CR0)
+
+})
+
+test_that("clubSandwich agrees with metafor::robust() for CR1p.", {
+  
+  test_CR1 <- conf_int(corr_meta, vcov = "CR1p", cluster = corrdat$studyid, test = "naive-tp", p_values = TRUE)
+  meta_CR1 <- robust(corr_meta, cluster = corrdat$studyid, adjust = TRUE)
+  rob_CR1 <- conf_int(meta_CR1, vcov = "CR1p", cluster = corrdat$studyid, test = "naive-tp", p_values = TRUE)
+  expect_equal(test_CR1$SE, meta_CR1$se)
+  expect_equal(test_CR1$df, rep(meta_CR1$df, length(test_CR1$df)))
+  expect_equal(rob_CR1, test_CR1)
+  
+  club_F_CR1 <- Wald_test(corr_meta, constraints = constrain_zero(2:4), 
+                          vcov = "CR1p", cluster = corrdat$studyid, test = "Naive-Fp")
+  rob_F_CR1 <- Wald_test(meta_CR1, constraints = constrain_zero(2:4), 
+                         vcov = "CR1p", cluster = corrdat$studyid, test = "Naive-Fp")
+  expect_equal(club_F_CR1$Fstat, meta_CR1$QM)
+  expect_equal(club_F_CR1$df_num, meta_CR1$QMdf[1])
+  expect_equal(club_F_CR1$df_denom, meta_CR1$QMdf[2])
+  expect_equal(club_F_CR1$p_val, meta_CR1$QMp)
+  expect_equal(club_F_CR1, rob_F_CR1)
+})
+
+test_that("clubSandwich agrees with metafor::robust() for CR2.", {
+  
+  skip_if(packageVersion('metafor') < "3.1.31")
+  test_CR2 <- conf_int(corr_meta, vcov = "CR2", cluster = corrdat$studyid, p_values = TRUE)
+  meta_CR2 <- robust(corr_meta, cluster = corrdat$studyid, clubSandwich = TRUE)
+  rob_CR2 <- conf_int(meta_CR2, vcov = "CR2", cluster = corrdat$studyid, p_values = TRUE)
+  expect_equal(test_CR2$SE, meta_CR2$se)
+  expect_equal(rob_CR2, test_CR2)
+  
+  club_F_CR2 <- Wald_test(corr_meta, constraints = constrain_zero(2:4), 
+                          vcov = "CR2", cluster = corrdat$studyid, test = "All")
+  rob_F_CR2 <- Wald_test(meta_CR2, constraints = constrain_zero(2:4), 
+                         vcov = "CR2", cluster = corrdat$studyid, test = "All")
+  expect_equal(subset(club_F_CR2, test == "HTZ")$Fstat, meta_CR2$QM)
+  expect_equal(subset(club_F_CR2, test == "HTZ")$df_num, meta_CR2$QMdf[1])
+  expect_equal(subset(club_F_CR2, test == "HTZ")$df_denom, meta_CR2$QMdf[2])
+  expect_equal(subset(club_F_CR2, test == "HTZ")$p_val, meta_CR2$QMp)
+  expect_equal(club_F_CR2, rob_F_CR2)
+})
+
+test_that("clubSandwich methods work on robust.rma objects.", {
+  
+  hier_robust <- robust(hier_meta, cluster = hierdat$studyid, adjust = TRUE)
+  
+  expect_equal(residuals_CS(hier_meta), residuals_CS(hier_robust))
+  expect_equal(coef_CS(hier_meta), coef_CS(hier_robust))
+  expect_equal(model_matrix(hier_meta), model_matrix(hier_robust))
+  expect_equal(bread(hier_meta), bread(hier_robust))
+  expect_equal(v_scale(hier_meta), v_scale(hier_robust))
+  expect_equal(targetVariance(hier_meta, cluster = hierdat$studyid), 
+               targetVariance(hier_robust, cluster = hierdat$studyid))
+  expect_equal(weightMatrix(hier_meta, cluster = hierdat$studyid), 
+               weightMatrix(hier_robust, cluster = hierdat$studyid))
+
+  hier_club <- robust(hier_meta, cluster = hierdat$studyid, adjust = FALSE, clubSandwich = TRUE)
+
+  expect_equal(residuals_CS(hier_meta), residuals_CS(hier_club))
+  expect_equal(coef_CS(hier_meta), coef_CS(hier_club))
+  expect_equal(model_matrix(hier_meta), model_matrix(hier_club))
+  expect_equal(bread(hier_meta), bread(hier_club))
+  expect_equal(v_scale(hier_meta), v_scale(hier_club))
+  expect_equal(targetVariance(hier_meta, cluster = hierdat$studyid), 
+               targetVariance(hier_club, cluster = hierdat$studyid))
+  expect_equal(weightMatrix(hier_meta, cluster = hierdat$studyid), 
+               weightMatrix(hier_club, cluster = hierdat$studyid))
+  
+})
+
+
+test_that("clubSandwich works with weights of zero.", {
+  
+  data("dat.konstantopoulos2011", package = "metafor")
+  n_konst <- nrow(dat.konstantopoulos2011)
+  dat.konstantopoulos2011$wt <- rpois(n_konst, lambda = 0.8)
+  table(dat.konstantopoulos2011$wt)
+
+  rma_full <- rma.uni(yi ~ year, vi = vi, weights = wt, data = dat.konstantopoulos2011, method = "FE")
+  konst_sub <- subset(dat.konstantopoulos2011, wt > 0)
+  rma_sub <- rma.uni(yi ~ year, vi = vi, weights = wt, data = konst_sub, method = "FE")
+  # Note that this only works for method = "FE" because 
+  # tau.sq estimators differ between rma_full and rma_sub
+  
+  CR_full <- lapply(CR_types, function(x) vcovCR(rma_full, cluster = dat.konstantopoulos2011$district, type = x))
+  CR_sub <- lapply(CR_types, function(x) vcovCR(rma_sub, cluster = konst_sub$district, type = x))
+  expect_equal(CR_full, CR_sub, check.attributes = FALSE)
+  
+  test_full <- lapply(CR_types, function(x) coef_test(rma_full, vcov = x, cluster = dat.konstantopoulos2011$district, test = c("z","naive-t","Satterthwaite"), p_values = TRUE))
+  test_sub <- lapply(CR_types, function(x) coef_test(rma_sub, vcov = x, cluster = konst_sub$district, test = c("z","naive-t","Satterthwaite"), p_values = TRUE))
+  expect_equal(test_full, test_sub, check.attributes = FALSE)
+  
+  dat_miss <- dat.konstantopoulos2011
+  miss_indicator <- sample.int(n_konst, size = round(n_konst / 10))
+  dat_miss$year[miss_indicator] <- NA
+  with(dat_miss, table(wt, is.na(year)))
+  
+  expect_warning(
+    rma_dropped <- rma.uni(yi ~ year, vi, weights = wt, data = dat_miss)
+  )
+  dat_complete <- subset(dat_miss, !is.na(year))
+  rma_complete <- rma.uni(yi ~ year, vi, weights = wt, data = dat_complete)
+  
+  CR_drop <- lapply(CR_types, function(x) vcovCR(rma_dropped, cluster = dat_miss$district, type = x))
+  CR_complete <- lapply(CR_types, function(x) vcovCR(rma_complete, cluster = dat_complete$district, type = x))
+  expect_equal(CR_drop, CR_complete)
+  
+  test_drop <- lapply(CR_types, function(x) coef_test(rma_dropped, vcov = x, cluster = dat_miss$district, test = "All", p_values = FALSE))
+  test_complete <- lapply(CR_types, function(x) coef_test(rma_complete, vcov = x, cluster = dat_complete$district, test = "All", p_values = FALSE))
+  expect_equal(test_drop, test_complete)
+  
+})
