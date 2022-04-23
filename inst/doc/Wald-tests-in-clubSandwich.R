@@ -44,9 +44,6 @@ Wald_test(lm_trt, constraints = C_trt, vcov = V_trt)
 ## -----------------------------------------------------------------------------
 Wald_test(lm_trt, constraints = constrain_zero(2:3), vcov = V_trt)
 
-## ---- eval = FALSE------------------------------------------------------------
-#  function(coefs) constrain_zero(constraints, coefs = coefs)
-
 ## ----type-sep-----------------------------------------------------------------
 
 lm_sep <- lm(math1 ~ 0 + stark, data = STAR)

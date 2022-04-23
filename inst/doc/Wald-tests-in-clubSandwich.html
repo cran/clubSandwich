@@ -12,7 +12,7 @@
 
 <meta name="author" content="James E. Pustejovsky" />
 
-<meta name="date" content="2022-01-17" />
+<meta name="date" content="2022-04-22" />
 
 <title>Wald tests of multiple-constraint null hypotheses</title>
 
@@ -163,7 +163,7 @@ div.csl-indent {
 
 <h1 class="title toc-ignore">Wald tests of multiple-constraint null hypotheses</h1>
 <h4 class="author">James E. Pustejovsky</h4>
-<h4 class="date">2022-01-17</h4>
+<h4 class="date">2022-04-22</h4>
 
 
 <div id="TOC">
@@ -284,7 +284,7 @@ Q = \left(\mathbf{C}\boldsymbol{\hat\beta}\right)&#39; \left(\mathbf{C} \mathbf{
 <pre><code>##  test Fstat df_num df_denom  p_val sig
 ##   HTZ  10.2      2     65.3 &lt;0.001 ***</code></pre>
 <p>To reduce redundancy in the syntax, we can also omit the <code>coefs</code> argument to <code>constrain_zero</code>, so long as we call it inside of <code>Wald_test</code><a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>:</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_trt, <span class="at">constraints =</span> <span class="fu">constrain_zero</span>(<span class="dv">2</span><span class="sc">:</span><span class="dv">3</span>), <span class="at">vcov =</span> V_trt)</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_trt, <span class="at">constraints =</span> <span class="fu">constrain_zero</span>(<span class="dv">2</span><span class="sc">:</span><span class="dv">3</span>), <span class="at">vcov =</span> V_trt)</span></code></pre></div>
 <pre><code>##  test Fstat df_num df_denom  p_val sig
 ##   HTZ  10.2      2     65.3 &lt;0.001 ***</code></pre>
 </div>
@@ -294,9 +294,9 @@ Q = \left(\mathbf{C}\boldsymbol{\hat\beta}\right)&#39; \left(\mathbf{C} \mathbf{
 <p>To see how this works, let’s look at a different way of parameterizing our simple model for the STAR data, by using separate intercepts for each treatment condition. The estimating equation would then be <span class="math display">\[
 \left(\text{Math}\right)_{ij} = \beta_0 \left(\text{regular}\right)_{ij} + \beta_1 \left(\text{small}\right)_{ij} + \beta_2 \left(\text{aide}\right)_{ij} + e_{ij}.
 \]</span> This model can be estimated in R by dropping the intercept term:</p>
-<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>lm_sep <span class="ot">&lt;-</span> <span class="fu">lm</span>(math1 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> stark, <span class="at">data =</span> STAR)</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>V_sep <span class="ot">&lt;-</span> <span class="fu">vcovCR</span>(lm_sep, <span class="at">cluster =</span> STAR<span class="sc">$</span>schoolidk, <span class="at">type =</span> <span class="st">&quot;CR2&quot;</span>)</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">coef_test</span>(lm_sep, <span class="at">vcov =</span> V_sep)</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>lm_sep <span class="ot">&lt;-</span> <span class="fu">lm</span>(math1 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> stark, <span class="at">data =</span> STAR)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>V_sep <span class="ot">&lt;-</span> <span class="fu">vcovCR</span>(lm_sep, <span class="at">cluster =</span> STAR<span class="sc">$</span>schoolidk, <span class="at">type =</span> <span class="st">&quot;CR2&quot;</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">coef_test</span>(lm_sep, <span class="at">vcov =</span> V_sep)</span></code></pre></div>
 <pre><code>##         Coef. Estimate   SE t-stat d.f. (Satt) p-val (Satt) Sig.
 ##  starkregular      532 2.78    192        59.9       &lt;0.001  ***
 ##    starksmall      541 2.89    187        65.0       &lt;0.001  ***
@@ -308,32 +308,32 @@ Q = \left(\mathbf{C}\boldsymbol{\hat\beta}\right)&#39; \left(\mathbf{C} \mathbf{
 \mathbf{C}\boldsymbol\beta = \left[\begin{array}{ccc} -1 &amp; 1 &amp; 0 \\ -1 &amp; 0 &amp; 1 \end{array} \right] \left[\begin{array}{c} \beta_0 \\ \beta_1 \\ \beta_2 \end{array} \right] = \left[\begin{array}{c} \beta_1 - \beta_0 \\ \beta_2 - \beta_0 \end{array} \right],
 \]</span> which is set equal to <span class="math inline">\(\left[\begin{array}{c} 0 \\ 0 \end{array} \right]\)</span>.</p>
 <p>The <code>constrain_equal()</code> function will create matrices like this automatically, given a set of coefficients to constrain. The syntax is identical to <code>constrain_zero()</code>:</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">args</span>(constrain_equal)</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">args</span>(constrain_equal)</span></code></pre></div>
 <pre><code>## function (constraints, coefs, reg_ex = FALSE) 
 ## NULL</code></pre>
 <p>To test the joint null hypothesis that average math performance is equal across the three treatment conditions, we can constrain all three coefficients of <code>lm_sep</code> to be equal:</p>
-<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">constrain_equal</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="at">coefs =</span> <span class="fu">coef</span>(lm_sep))</span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">constrain_equal</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="at">coefs =</span> <span class="fu">coef</span>(lm_sep))</span></code></pre></div>
 <pre><code>##      [,1] [,2] [,3]
 ## [1,]   -1    1    0
 ## [2,]   -1    0    1</code></pre>
 <p>Or equivalently:</p>
-<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">constrain_equal</span>(<span class="fu">c</span>(<span class="st">&quot;starkregular&quot;</span>,<span class="st">&quot;starksmall&quot;</span>,<span class="st">&quot;starkaide&quot;</span>), <span class="at">coefs =</span> <span class="fu">coef</span>(lm_sep))</span></code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">constrain_equal</span>(<span class="fu">c</span>(<span class="st">&quot;starkregular&quot;</span>,<span class="st">&quot;starksmall&quot;</span>,<span class="st">&quot;starkaide&quot;</span>), <span class="at">coefs =</span> <span class="fu">coef</span>(lm_sep))</span></code></pre></div>
 <pre><code>##      [,1] [,2] [,3]
 ## [1,]   -1    1    0
 ## [2,]   -1    0    1</code></pre>
 <p>or</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">constrain_equal</span>(<span class="st">&quot;^stark&quot;</span>, <span class="at">coefs =</span> <span class="fu">coef</span>(lm_sep), <span class="at">reg_ex =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">constrain_equal</span>(<span class="st">&quot;^stark&quot;</span>, <span class="at">coefs =</span> <span class="fu">coef</span>(lm_sep), <span class="at">reg_ex =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>##      [,1] [,2] [,3]
 ## [1,]   -1    1    0
 ## [2,]   -1    0    1</code></pre>
 <p>Just as with <code>constrain_zero</code>, if <code>constraints</code> is a regular expression, then the <code>reg_ex</code> argument needs to be set to <code>TRUE</code>.</p>
 <p>This constraint matrix can then be fed into <code>Wald_test()</code>:</p>
-<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>C_sep <span class="ot">&lt;-</span> <span class="fu">constrain_equal</span>(<span class="st">&quot;^stark&quot;</span>, <span class="at">coefs =</span> <span class="fu">coef</span>(lm_sep), <span class="at">reg_ex =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_sep, <span class="at">constraints =</span> C_sep, <span class="at">vcov =</span> V_sep)</span></code></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>C_sep <span class="ot">&lt;-</span> <span class="fu">constrain_equal</span>(<span class="st">&quot;^stark&quot;</span>, <span class="at">coefs =</span> <span class="fu">coef</span>(lm_sep), <span class="at">reg_ex =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_sep, <span class="at">constraints =</span> C_sep, <span class="at">vcov =</span> V_sep)</span></code></pre></div>
 <pre><code>##  test Fstat df_num df_denom  p_val sig
 ##   HTZ  10.2      2     65.3 &lt;0.001 ***</code></pre>
 <p>or equivalently:</p>
-<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_sep, <span class="at">constraints =</span> <span class="fu">constrain_equal</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>), <span class="at">vcov =</span> V_sep)</span></code></pre></div>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_sep, <span class="at">constraints =</span> <span class="fu">constrain_equal</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>), <span class="at">vcov =</span> V_sep)</span></code></pre></div>
 <pre><code>##  test Fstat df_num df_denom  p_val sig
 ##   HTZ  10.2      2     65.3 &lt;0.001 ***</code></pre>
 <p>Note that these test results are exactly equal to the tests based on <code>lm_trt</code> with <code>constrain_zero()</code>. They’re algebraically equivalent—just different ways of parameterizing the same model and constraints.</p>
@@ -350,9 +350,9 @@ Q = \left(\mathbf{C}\boldsymbol{\hat\beta}\right)&#39; \left(\mathbf{C} \mathbf{
 &amp; \quad\quad\quad\quad + \mathbf{x}_{ij} \boldsymbol\gamma  + e_{ij},
 \end{aligned}
 \]</span> where <span class="math inline">\(\mathbf{x}_{ij}\)</span> is a row vector of student characteristics, included just to make the regression look fancier. In this specification, <span class="math inline">\(\beta_3\)</span> and <span class="math inline">\(\beta_4\)</span> represent the effects of being in a small class or aide class, compared to being in a regular class, but <em>only for the reference level of urbanicity</em>—in this case, urban schools. The coefficients <span class="math inline">\(\beta_5, \beta_6, \beta_7, \beta_8\)</span> all represent <em>interactions</em> between treatment condition and urbanicity. Here’s the model, estimated in R:</p>
-<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>lm_urbanicity <span class="ot">&lt;-</span> <span class="fu">lm</span>(math1 <span class="sc">~</span> schoolk <span class="sc">*</span> stark <span class="sc">+</span> gender <span class="sc">+</span> ethnicity <span class="sc">+</span> lunchk, <span class="at">data =</span> STAR)</span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>V_urbanicity <span class="ot">&lt;-</span> <span class="fu">vcovCR</span>(lm_urbanicity, <span class="at">cluster =</span> STAR<span class="sc">$</span>schoolidk, <span class="at">type =</span> <span class="st">&quot;CR2&quot;</span>)</span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="fu">coef_test</span>(lm_urbanicity, <span class="at">vcov =</span> V_urbanicity)</span></code></pre></div>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>lm_urbanicity <span class="ot">&lt;-</span> <span class="fu">lm</span>(math1 <span class="sc">~</span> schoolk <span class="sc">*</span> stark <span class="sc">+</span> gender <span class="sc">+</span> ethnicity <span class="sc">+</span> lunchk, <span class="at">data =</span> STAR)</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>V_urbanicity <span class="ot">&lt;-</span> <span class="fu">vcovCR</span>(lm_urbanicity, <span class="at">cluster =</span> STAR<span class="sc">$</span>schoolidk, <span class="at">type =</span> <span class="st">&quot;CR2&quot;</span>)</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="fu">coef_test</span>(lm_urbanicity, <span class="at">vcov =</span> V_urbanicity)</span></code></pre></div>
 <pre><code>##                       Coef. Estimate    SE  t-stat d.f. (Satt) p-val (Satt)
 ##                 (Intercept)   542.62  5.91 91.8599       21.70       &lt;0.001
 ##             schoolksuburban     2.77  6.76  0.4100       28.35       0.6849
@@ -386,30 +386,30 @@ Q = \left(\mathbf{C}\boldsymbol{\hat\beta}\right)&#39; \left(\mathbf{C} \mathbf{
 ##      
 ##     *</code></pre>
 <p>With this specification, there are several different null hypotheses that we might want to test. For one, perhaps we want to see if there is <em>any</em> variation in treatment effects across different levels of urbanicity. This can be expressed in the null hypothesis that all four interaction terms are zero, or <span class="math inline">\(H_{0A}: \beta_5 = \beta_6 = \beta_7 = \beta_8 = 0\)</span>. With Wald test:</p>
-<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_urbanicity, </span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">constraints =</span> <span class="fu">constrain_zero</span>(<span class="st">&quot;schoolk.+:stark&quot;</span>, <span class="at">reg_ex =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">vcov =</span> V_urbanicity)</span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_urbanicity, </span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">constraints =</span> <span class="fu">constrain_zero</span>(<span class="st">&quot;schoolk.+:stark&quot;</span>, <span class="at">reg_ex =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">vcov =</span> V_urbanicity)</span></code></pre></div>
 <pre><code>##  test Fstat df_num df_denom p_val sig
 ##   HTZ  1.96      4     37.5 0.121</code></pre>
 <p>Another possibility is that we might want to focus on variation in the effect of being in a small class or regular class, while ignoring whatever is going on in the aide class condition. Here, the null hypothesis would be simply <span class="math inline">\(H_{0B}: \beta_5 = \beta_6 = 0\)</span>, tested as:</p>
-<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_urbanicity, </span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">constraints =</span> <span class="fu">constrain_zero</span>(<span class="st">&quot;schoolk.+:starksmall&quot;</span>, <span class="at">reg_ex =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">vcov =</span> V_urbanicity)</span></code></pre></div>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_urbanicity, </span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">constraints =</span> <span class="fu">constrain_zero</span>(<span class="st">&quot;schoolk.+:starksmall&quot;</span>, <span class="at">reg_ex =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">vcov =</span> V_urbanicity)</span></code></pre></div>
 <pre><code>##  test Fstat df_num df_denom p_val sig
 ##   HTZ 0.189      2     34.5 0.828</code></pre>
 <div id="lists-of-constraints" class="section level2" number="2.1">
 <h2><span class="header-section-number">2.1</span> Lists of constraints</h2>
 <p>In models like the urbanicity-by-treatment interaction specification, we may need to run multiple tests on the same estimating equation. This can be accomplished with <code>Wald_test</code> by providing a <em>list</em> of constraints to the <code>constraints</code> argument. For example, we could test the hypotheses described above by creating a list of several constraint matrices and then passing it to <code>Wald_test</code>:</p>
-<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>C_list <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Any interaction</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">constrain_zero</span>(<span class="st">&quot;schoolk.+:stark&quot;</span>, </span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="fu">coef</span>(lm_urbanicity), <span class="at">reg_ex =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Small vs regular</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">constrain_zero</span>(<span class="st">&quot;schoolk.+:starksmall&quot;</span>, </span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>                                      <span class="fu">coef</span>(lm_urbanicity), <span class="at">reg_ex =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_urbanicity, </span>
-<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>          <span class="at">constraints =</span> C_list,</span>
-<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a>          <span class="at">vcov =</span> V_urbanicity)</span></code></pre></div>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>C_list <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Any interaction</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">constrain_zero</span>(<span class="st">&quot;schoolk.+:stark&quot;</span>, </span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="fu">coef</span>(lm_urbanicity), <span class="at">reg_ex =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Small vs regular</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">constrain_zero</span>(<span class="st">&quot;schoolk.+:starksmall&quot;</span>, </span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>                                      <span class="fu">coef</span>(lm_urbanicity), <span class="at">reg_ex =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_urbanicity, </span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>          <span class="at">constraints =</span> C_list,</span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>          <span class="at">vcov =</span> V_urbanicity)</span></code></pre></div>
 <pre><code>## $`Any interaction`
 ##  test Fstat df_num df_denom p_val sig
 ##   HTZ  1.96      4     37.5 0.121    
@@ -418,23 +418,23 @@ Q = \left(\mathbf{C}\boldsymbol{\hat\beta}\right)&#39; \left(\mathbf{C} \mathbf{
 ##  test Fstat df_num df_denom p_val sig
 ##   HTZ 0.189      2     34.5 0.828</code></pre>
 <p>Setting the option <code>tidy = TRUE</code> will arrange the output of all the tests into a single data frame:</p>
-<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_urbanicity, </span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">constraints =</span> C_list,</span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">vcov =</span> V_urbanicity, </span>
-<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">tidy =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_urbanicity, </span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">constraints =</span> C_list,</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">vcov =</span> V_urbanicity, </span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">tidy =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>##        hypothesis test Fstat df_num df_denom p_val sig
 ##   Any interaction  HTZ 1.960      4     37.5 0.121    
 ##  Small vs regular  HTZ 0.189      2     34.5 0.828</code></pre>
 <p>The list of constraints can also be created inside <code>Wald_test</code>, so that the <code>coefs</code> argument can be omitted from <code>constrain_zero()</code>:</p>
-<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(</span>
-<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>  lm_urbanicity, </span>
-<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">constraints =</span> <span class="fu">list</span>(</span>
-<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Any interaction</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">constrain_zero</span>(<span class="st">&quot;schoolk.+:stark&quot;</span>, <span class="at">reg_ex =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Small vs regular</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">constrain_zero</span>(<span class="st">&quot;schoolk.+:starksmall&quot;</span>, <span class="at">reg_ex =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">vcov =</span> V_urbanicity, </span>
-<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">tidy =</span> <span class="cn">TRUE</span></span>
-<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>  lm_urbanicity, </span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">constraints =</span> <span class="fu">list</span>(</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Any interaction</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">constrain_zero</span>(<span class="st">&quot;schoolk.+:stark&quot;</span>, <span class="at">reg_ex =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Small vs regular</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">constrain_zero</span>(<span class="st">&quot;schoolk.+:starksmall&quot;</span>, <span class="at">reg_ex =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">vcov =</span> V_urbanicity, </span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">tidy =</span> <span class="cn">TRUE</span></span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
 <pre><code>##        hypothesis test Fstat df_num df_denom p_val sig
 ##   Any interaction  HTZ 1.960      4     37.5 0.121    
 ##  Small vs regular  HTZ 0.189      2     34.5 0.828</code></pre>
@@ -444,14 +444,14 @@ Q = \left(\mathbf{C}\boldsymbol{\hat\beta}\right)&#39; \left(\mathbf{C} \mathbf{
 <h1><span class="header-section-number">3</span> Pairwise t-tests</h1>
 <p>The <code>clubSandwich</code> package also provides a further convenience function, <code>constrain_pairwise()</code> that can be used in combination with <code>Wald_test()</code> to conduct pairwise comparisons among a set of regression coefficients. This function differs from the other two <code>constrain_*()</code> functions because it returns a <em>list</em> of constraint matrices, each of which corresponds to a single linear combination of covariates. Specifically, the <code>constrain_pairwise()</code> function provides a list of constraints that represent the differences between every possible pair among a specified set of coefficients. The syntax is very similar to the other <code>constrain_*()</code> functions.</p>
 <p>To demonstrate, consider the separate-intercepts specification of the simpler regression model:</p>
-<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coef_test</span>(lm_sep, <span class="at">vcov =</span> V_sep)</span></code></pre></div>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coef_test</span>(lm_sep, <span class="at">vcov =</span> V_sep)</span></code></pre></div>
 <pre><code>##         Coef. Estimate   SE t-stat d.f. (Satt) p-val (Satt) Sig.
 ##  starkregular      532 2.78    192        59.9       &lt;0.001  ***
 ##    starksmall      541 2.89    187        65.0       &lt;0.001  ***
 ##     starkaide      531 2.72    195        64.3       &lt;0.001  ***</code></pre>
 <p>This specification is nice because it lets us simply read off the average outcomes for each group. However, we will naturally also want to know about whether there are differences between the groups, so we’ll want to compare the small-class condition to the regular-size class condition, the aide condition to the regular-size class condition, and the small-class condition to the aide condition. Thus, we’ll want comparisons among all three coefficients:</p>
-<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>C_pairs <span class="ot">&lt;-</span> <span class="fu">constrain_pairwise</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="at">coefs =</span> <span class="fu">coef</span>(lm_sep))</span>
-<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>C_pairs</span></code></pre></div>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>C_pairs <span class="ot">&lt;-</span> <span class="fu">constrain_pairwise</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="at">coefs =</span> <span class="fu">coef</span>(lm_sep))</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>C_pairs</span></code></pre></div>
 <pre><code>## $`starksmall - starkregular`
 ##      [,1] [,2] [,3]
 ## [1,]   -1    1    0
@@ -464,19 +464,19 @@ Q = \left(\mathbf{C}\boldsymbol{\hat\beta}\right)&#39; \left(\mathbf{C} \mathbf{
 ##      [,1] [,2] [,3]
 ## [1,]    0   -1    1</code></pre>
 <p>Feeding these constraints into <code>Wald_test()</code> gives us significance tests for each pair:</p>
-<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_sep, <span class="at">constraints =</span> C_pairs, <span class="at">vcov =</span> V_sep, <span class="at">tidy =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_sep, <span class="at">constraints =</span> C_pairs, <span class="at">vcov =</span> V_sep, <span class="at">tidy =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>##                 hypothesis test   Fstat df_num df_denom  p_val sig
 ##  starksmall - starkregular  HTZ 16.9238      1     65.6 &lt;0.001 ***
 ##   starkaide - starkregular  HTZ  0.0673      1     65.6  0.796    
 ##     starkaide - starksmall  HTZ 17.8137      1     66.9 &lt;0.001 ***</code></pre>
 <p>The first two of these tests are equivalent to the tests of the treatment effect coefficients in the other parameterization of the model. Indeed, the denominator degrees of freedom are identical to the results of <code>coef_test(lm_trt, vcov = V_trt)</code>; the <code>Fstat</code>s here are equal to the squared t-statistics from the first model:</p>
-<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>t_stats <span class="ot">&lt;-</span> <span class="fu">coef_test</span>(lm_trt, <span class="at">vcov =</span> V_trt)<span class="sc">$</span>tstat[<span class="dv">2</span><span class="sc">:</span><span class="dv">3</span>]</span>
-<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>F_stats <span class="ot">&lt;-</span> <span class="fu">Wald_test</span>(lm_sep, <span class="at">constraints =</span> C_pairs, <span class="at">vcov =</span> V_sep, <span class="at">tidy =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>Fstat[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span>
-<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>(t_stats<span class="sc">^</span><span class="dv">2</span>, F_stats)</span></code></pre></div>
+<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>t_stats <span class="ot">&lt;-</span> <span class="fu">coef_test</span>(lm_trt, <span class="at">vcov =</span> V_trt)<span class="sc">$</span>tstat[<span class="dv">2</span><span class="sc">:</span><span class="dv">3</span>]</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>F_stats <span class="ot">&lt;-</span> <span class="fu">Wald_test</span>(lm_sep, <span class="at">constraints =</span> C_pairs, <span class="at">vcov =</span> V_sep, <span class="at">tidy =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>Fstat[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>(t_stats<span class="sc">^</span><span class="dv">2</span>, F_stats)</span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
 <p>It is important to note that the p-values from the pairwise comparisons are <em>not</em> corrected for multiplicity.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> For now, please correct-your-own using <code>p.adjust()</code> or your preferred method.</p>
 <p>Pairwise comparisons might also be of use in the model with treatment-by-urbanicity interactions. Here’s the model results again:</p>
-<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coef_test</span>(lm_urbanicity, <span class="at">vcov =</span> V_urbanicity)</span></code></pre></div>
+<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coef_test</span>(lm_urbanicity, <span class="at">vcov =</span> V_urbanicity)</span></code></pre></div>
 <pre><code>##                       Coef. Estimate    SE  t-stat d.f. (Satt) p-val (Satt)
 ##                 (Intercept)   542.62  5.91 91.8599       21.70       &lt;0.001
 ##             schoolksuburban     2.77  6.76  0.4100       28.35       0.6849
@@ -510,10 +510,10 @@ Q = \left(\mathbf{C}\boldsymbol{\hat\beta}\right)&#39; \left(\mathbf{C} \mathbf{
 ##      
 ##     *</code></pre>
 <p>Suppose that we are interested in the effect of small versus regular size classes, and in particular whether this effect varies across schools in different areas. The coefficients on <code>schoolksuburban:starksmall</code> and <code>schoolkrural:starksmall</code> already give us the differences in treatment effects between suburban schools versus urban schools and between rural schools versus urban schools. The difference between these coefficients gives us the difference in treatment effects between suburban schools and rural schools. We can look at all three of these contrasts using <code>constrain_pairwise()</code> by setting the option <code>with_zero = TRUE</code>:</p>
-<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_urbanicity, </span>
-<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">constraints =</span> <span class="fu">constrain_pairwise</span>(<span class="st">&quot;:starksmall&quot;</span>, <span class="at">reg_ex =</span> <span class="cn">TRUE</span>, <span class="at">with_zero =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">vcov =</span> V_urbanicity,</span>
-<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">tidy =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(lm_urbanicity, </span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">constraints =</span> <span class="fu">constrain_pairwise</span>(<span class="st">&quot;:starksmall&quot;</span>, <span class="at">reg_ex =</span> <span class="cn">TRUE</span>, <span class="at">with_zero =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">vcov =</span> V_urbanicity,</span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">tidy =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <pre><code>##                                            hypothesis test   Fstat df_num
 ##                            schoolksuburban:starksmall  HTZ 0.22526      1
 ##                               schoolkrural:starksmall  HTZ 0.00308      1
@@ -543,9 +543,7 @@ Tipton, E., &amp; Pustejovsky, J. E. (2015). Small-sample adjustments for tests 
 <hr />
 <ol>
 <li id="fn1"><p>In <span class="citation">Pustejovsky &amp; Tipton (2018)</span> we used a more general formulation of multiple-constraint null hypotheses, expressed as <span class="math inline">\(H_0: \mathbf{C} \boldsymbol\beta = \mathbf{d}\)</span> for some fixed <span class="math inline">\(q \times 1\)</span> vector <span class="math inline">\(\mathbf{d}\)</span>. In practice, it’s often possible to modify the <span class="math inline">\(\mathbf{C}\)</span> matrix so that <span class="math inline">\(\mathbf{d}\)</span> can always be set to <span class="math inline">\(\mathbf{0}\)</span>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>How does this work? If we omit the <code>coefs</code> argument, <code>constrain_zero()</code> acts as a functional, by returning a function equivalent to</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="cf">function</span>(coefs) <span class="fu">constrain_zero</span>(constraints, <span class="at">coefs =</span> coefs)    </span></code></pre></div>
-<p>If this function is fed into the <code>constraints</code> argument of <code>Wald_test()</code>, <code>Wald_test()</code> recognizes that it is a function and evaluates the function with <code>coef(obj)</code>. It’s a kinda-sorta hacky substitute for lazy evaluation. If you have suggestions for how to do this more elegantly, please send them my way.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>How does this work? If we omit the <code>coefs</code> argument, <code>constrain_zero()</code> acts as a functional, by returning a function equivalent to <code>function(coefs) constrain_zero(constraints, coefs = coefs)</code>. If this function is fed into the <code>constraints</code> argument of <code>Wald_test()</code>, <code>Wald_test()</code> recognizes that it is a function and evaluates the function with <code>coef(obj)</code>. It’s a kinda-sorta hacky substitute for lazy evaluation. If you have suggestions for how to do this more elegantly, please send them my way.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 <li id="fn3"><p>Options to include multiplicity corrections (Bonferroni, Holm, Benjamini-Hochberg, etc.) might be included in a <a href="https://github.com/jepusto/clubSandwich/issues/33">future release</a>. Reach out if this is of interest to you.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

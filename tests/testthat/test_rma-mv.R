@@ -1,6 +1,9 @@
 context("rma.mv objects")
 set.seed(20190513)
 
+
+CR_types <- paste0("CR",0:4)
+
 library(robumeta, quietly=TRUE)
 suppressMessages(library(metafor, quietly=TRUE))
 
@@ -53,8 +56,6 @@ test_that("CR2 t-tests do not exactly agree with robumeta for hierarchical weigh
   expect_that(all.equal(hier_robu$dfs, CR2_ttests$df), is_a("character"))
   expect_that(all.equal(hier_robu$reg_table$prob, CR2_ttests$p_Satt), is_a("character"))
 })
-
-CR_types <- paste0("CR",0:4)
 
 dat_long <- to.long(measure="OR", ai=tpos, bi=tneg, ci=cpos, di=cneg, data=dat.bcg)
 levels(dat_long$group) <- c("exp", "con")
@@ -445,9 +446,9 @@ test_that("clubSandwich agrees with metafor::robust() for CR0.", {
   rob_CR0 <- coef_test(meta_CR0, vcov = "CR0", test = "All")
   expect_equal(test_CR0$SE, meta_CR0$se)
   expect_equal(test_CR0$df_tp, rep(meta_CR0$df, length(test_CR0$df_tp)))
-  expect_equal(test_CR0$p_tp, meta_CR0$pval)
-  expect_equal(rob_CR0, test_CR0)
-  
+  expect_equal(test_CR0$p_tp, meta_CR0$pval, tolerance = 1e-5)
+  compare_ttests(rob_CR0, test_CR0, tol = 1e-6)
+
   club_F_CR0 <- Wald_test(corr_meta, constraints = constrain_zero(2:4), 
                           vcov = "CR0", test = "Naive-Fp")
   rob_F_CR0 <- Wald_test(meta_CR0, constraints = constrain_zero(2:4), 
@@ -455,9 +456,9 @@ test_that("clubSandwich agrees with metafor::robust() for CR0.", {
   expect_equal(club_F_CR0$Fstat, meta_CR0$QM)
   expect_equal(club_F_CR0$df_num, meta_CR0$QMdf[1])
   expect_equal(club_F_CR0$df_denom, meta_CR0$QMdf[2])
-  expect_equal(club_F_CR0$p_val, meta_CR0$QMp)
-  expect_equal(club_F_CR0, rob_F_CR0)
-  
+  expect_equal(club_F_CR0$p_val, meta_CR0$QMp, tolerance = 1e-5)
+  compare_Waldtests(club_F_CR0, rob_F_CR0, tol = 1e-5)
+
 })
 
 test_that("clubSandwich agrees with metafor::robust() for CR1p.", {
@@ -467,8 +468,8 @@ test_that("clubSandwich agrees with metafor::robust() for CR1p.", {
   rob_CR1 <- coef_test(meta_CR1, vcov = "CR1p", test = "All")
   expect_equal(test_CR1$SE, meta_CR1$se)
   expect_equal(test_CR1$df_tp, rep(meta_CR1$df, length(test_CR1$df_tp)))
-  expect_equal(test_CR1$p_tp, meta_CR1$pval)
-  expect_equal(rob_CR1, test_CR1, tolerance = 1e-6)
+  expect_equal(test_CR1$p_tp, meta_CR1$pval, tolerance = 1e-5)
+  compare_ttests(rob_CR1, test_CR1, tol = 1e-5)
   
   club_F_CR1 <- Wald_test(corr_meta, constraints = constrain_zero(2:4), 
                           vcov = "CR1p", test = "Naive-Fp")
@@ -477,8 +478,8 @@ test_that("clubSandwich agrees with metafor::robust() for CR1p.", {
   expect_equal(club_F_CR1$Fstat, meta_CR1$QM)
   expect_equal(club_F_CR1$df_num, meta_CR1$QMdf[1])
   expect_equal(club_F_CR1$df_denom, meta_CR1$QMdf[2])
-  expect_equal(club_F_CR1$p_val, meta_CR1$QMp, tolerance = 1e-6)
-  expect_equal(club_F_CR1, rob_F_CR1, tolerance = 1e-6)
+  expect_equal(club_F_CR1$p_val, meta_CR1$QMp, tolerance = 1e-5)
+  compare_Waldtests(club_F_CR1, rob_F_CR1, tol = 1e-5)
   
 })
 
@@ -489,7 +490,7 @@ test_that("clubSandwich agrees with metafor::robust() for CR2.", {
   meta_CR2 <- robust(corr_meta, cluster = corrdat$studyid, clubSandwich = TRUE)
   rob_CR2 <- coef_test(meta_CR2, vcov = "CR2", test = "All")
   expect_equal(test_CR2$SE, meta_CR2$se)
-  expect_equal(rob_CR2, test_CR2, tolerance = 1e-6)
+  compare_ttests(rob_CR2, test_CR2, tol = 1e-5)
   
   club_F_CR2 <- Wald_test(corr_meta, constraints = constrain_zero(2:4), 
                           vcov = "CR2", test = "All")
@@ -498,8 +499,8 @@ test_that("clubSandwich agrees with metafor::robust() for CR2.", {
   expect_equal(subset(club_F_CR2, test == "HTZ")$Fstat, meta_CR2$QM)
   expect_equal(subset(club_F_CR2, test == "HTZ")$df_num, meta_CR2$QMdf[1])
   expect_equal(subset(club_F_CR2, test == "HTZ")$df_denom, meta_CR2$QMdf[2])
-  expect_equal(subset(club_F_CR2, test == "HTZ")$p_val, meta_CR2$QMp, tolerance = 1e-6)
-  expect_equal(club_F_CR2, rob_F_CR2, tolerance = 1e-6)
+  expect_equal(subset(club_F_CR2, test == "HTZ")$p_val, meta_CR2$QMp, tolerance = 1e-5)
+  compare_Waldtests(club_F_CR2, rob_F_CR2, tol = 1e-5)
 })
 
 test_that("clubSandwich methods work on robust.rma objects.", {
@@ -527,5 +528,71 @@ test_that("clubSandwich methods work on robust.rma objects.", {
                targetVariance(hier_club, cluster = hierdat$studyid))
   expect_equal(weightMatrix(hier_meta, cluster = hierdat$studyid), 
                weightMatrix(hier_club, cluster = hierdat$studyid))
+  
+})
+
+test_that("clubSandwich works with user-weighted rma.mv objects.", {
+  
+  data("oswald2013", package = "robumeta")
+  oswald2013$yi <- atanh(oswald2013$R)
+  oswald2013$vi <- 1 / (oswald2013$N - 3)
+  oswald2013$esID <- 1:nrow(oswald2013)
+  oswald2013$wt <- 1 + rpois(nrow(oswald2013), lambda = 1)
+  
+  V <- impute_covariance_matrix(vi = oswald2013$vi, cluster = oswald2013$Study, r = 0.4)
+  
+  mod_wt1 <- rma.mv(yi ~ 0 + Crit.Cat + Crit.Domain + IAT.Focus + Scoring,
+                    V = V, W = wt,
+                    random = ~ 1 | Study,
+                    data = oswald2013,
+                    sparse = TRUE)
+  
+  W_mat <- impute_covariance_matrix(vi = oswald2013$wt, cluster = oswald2013$Study, r = 0, return_list = FALSE)
+  
+  mod_wt2 <- rma.mv(yi ~ 0 + Crit.Cat + Crit.Domain + IAT.Focus + Scoring,
+                    V = V, W = W_mat,
+                    random = ~ 1 | Study,
+                    data = oswald2013,
+                    sparse = TRUE)
+  
+  
+  vcovs_1 <- lapply(CR_types, function(x) vcovCR(mod_wt1, type = x))
+  vcovs_2 <- lapply(CR_types, function(x) vcovCR(mod_wt2, type = x))
+
+  coef_test_wt1 <- lapply(CR_types, function(x) 
+    coef_test(mod_wt1, vcov = x, test = "All")
+  )
+  
+  coef_test_wt2 <- lapply(CR_types, function(x) 
+    coef_test(mod_wt2, vcov = x, test = "All")
+  )
+  
+  Wald_test_wt1 <- lapply(CR_types, function(x) 
+    Wald_test(mod_wt1, 
+              constraints = constrain_equal("Crit.Cat", reg_ex = TRUE),
+              vcov = x, 
+              test = "All")
+  )
+  
+  Wald_test_wt2 <- lapply(CR_types, function(x) 
+    Wald_test(mod_wt2, 
+              constraints = constrain_equal("Crit.Cat", reg_ex = TRUE),
+              vcov = x, 
+              test = "All")
+  )
+  
+  expect_equal(vcovs_1, vcovs_2, tolerance = 1e-5)
+  compare_ttests(coef_test_wt1, coef_test_wt2, tol = 1e-5)
+  compare_Waldtests(Wald_test_wt1, Wald_test_wt2, tol = 1e-5)
+  
+  for (i in seq_along(vcovs_1)) {
+    expect_s3_class(vcovs_1[[i]], "vcovCR")
+    expect_s3_class(vcovs_2[[i]], "vcovCR")
+    expect_s3_class(coef_test_wt1[[i]], "coef_test_clubSandwich")
+    expect_s3_class(coef_test_wt2[[i]], "coef_test_clubSandwich")
+    expect_s3_class(Wald_test_wt1[[i]], "Wald_test_clubSandwich")
+    expect_s3_class(Wald_test_wt2[[i]], "Wald_test_clubSandwich")
+  }
+  
   
 })
