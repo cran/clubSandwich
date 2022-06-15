@@ -1,3 +1,12 @@
+## ---- echo = FALSE, results = "asis", message = FALSE, warning = FALSE--------
+robu_available <- requireNamespace("robumeta", quietly = TRUE) 
+meta_available <- requireNamespace("metafor", quietly = TRUE)
+
+knitr::opts_chunk$set(eval = robu_available & meta_available)
+
+if (!robu_available) cat("## Building this vignette requires the robumeta package. Please install it. {-} \n")
+if (!meta_available) cat("## Building this vignette requires the metafor package. Please install it. {-} \n")
+
 ## ---- include=FALSE-------------------------------------------------------------------------------
 options(width = 100)
 

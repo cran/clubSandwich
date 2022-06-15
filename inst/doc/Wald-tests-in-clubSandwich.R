@@ -1,5 +1,14 @@
+## ---- echo = FALSE, results = "asis", message = FALSE, warning = FALSE--------
+library(clubSandwich)
+AER_available <- requireNamespace("AER", quietly = TRUE)
+
+knitr::opts_chunk$set(eval = AER_available)
+
+if (!AER_available) cat("# Building this vignette requires the AER package. Please install it. {-}")
+
 ## ---- message = FALSE, warning = FALSE----------------------------------------
 library(clubSandwich)
+
 data(STAR, package = "AER")
 
 # clean up a few variables
