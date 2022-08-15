@@ -1,6 +1,6 @@
-723cd7eca5b305c69cf7f031ba05aba4 *DESCRIPTION
+17b0a78c7c4774ad8385ee53539c148a *DESCRIPTION
 07ff211393c01ab2b3534ddd7a601d52 *NAMESPACE
-d8bbaa928430b94928701fb477869d97 *NEWS.md
+b9cbba1f8657902b4c58c2e5d0c9aec0 *NEWS.md
 a1c4db8cc7d1e4f2209e81d9049bccac *R/CR-adjustments.R
 91d2efb468fdd6227c91cf2300b0044e *R/S3-methods.R
 35afb3ddff980418f586fb27433088ca *R/Wald_test.R
@@ -11,7 +11,7 @@ c5a44056090bbe5f058f797e0c71bbb4 *R/conf_int.R
 bb0d8db3acb8652cbbca2efb0cdfbf39 *R/get_arrays.R
 3a3fe1e4f49c85dad4d8e8623414cda1 *R/glm.R
 3bdd747acc2b0bbbed0a26ea5f30371f *R/gls.R
-8d19ac6d19cc9d12e136963bcf316802 *R/ivreg.R
+fb5e175f375601fd969792b3cb8c129b *R/ivreg.R
 6a425ebb1f8b54dcd4195ae7b4bf70c6 *R/lm.R
 878431f8d11b487b99e73efc9aaa9432 *R/lme.R
 236c086171e1e53b30e331b1a72547ad *R/lmer.R
@@ -22,7 +22,7 @@ bb0d8db3acb8652cbbca2efb0cdfbf39 *R/get_arrays.R
 11d98e5c8cf564f1a2d394303ecfe221 *R/rma-uni.R
 337e2a1285271f501d6af62af63b9ed5 *R/robu.R
 efa27f93c711b2fb47c4e3350ca8d6bf *R/utilities.R
-9ad66b75c26e484cc7a3991fb847c8da *build/partial.rdb
+fbeb53e2d6d5a3c2e2e3e1da5a252b55 *build/partial.rdb
 06bf516326af02fb398fa248a0371a5a *build/vignette.rds
 8e550f05dda31b5c40d1817bae9a4363 *data/AchievementAwardsRCT.RData
 34360e013336c721ad97d9c3658db4df *data/MortalityRates.RData
@@ -30,13 +30,13 @@ efa27f93c711b2fb47c4e3350ca8d6bf *R/utilities.R
 6402f15efe8b3298b8dea6d9811a42ce *data/dropoutPrevention.RData
 d0902ccacf3defd478c6075e6c00720d *inst/doc/Wald-tests-in-clubSandwich.R
 57cb6087c04840ccb9e69e0499cd05c9 *inst/doc/Wald-tests-in-clubSandwich.Rmd
-d1364451d07dd96a03d5ac4aeac40d00 *inst/doc/Wald-tests-in-clubSandwich.html
+d99d73b5396310ddaf1f42a419d70ddb *inst/doc/Wald-tests-in-clubSandwich.html
 f5d5ffe95e040995200ee6a8fc756210 *inst/doc/meta-analysis-with-CRVE.R
 ebc446904160ac4add09b6ecf4e9a603 *inst/doc/meta-analysis-with-CRVE.Rmd
-54e643734dd3ce43ace980f760a15ee9 *inst/doc/meta-analysis-with-CRVE.html
+2716f1679fbffa58f87b9fb70a48ee04 *inst/doc/meta-analysis-with-CRVE.html
 fbd774bb057c0dbac28800d79de7a8da *inst/doc/panel-data-CRVE.R
 4694bc1c8daeb75adc066f6398ac4d0c *inst/doc/panel-data-CRVE.Rmd
-73062da08d62172d0657120f985c9754 *inst/doc/panel-data-CRVE.html
+0e7f9095aa6c8871e90a61c1ecabe16b *inst/doc/panel-data-CRVE.html
 cf2f124f9a215d635cbf9ef33c1c74a6 *man/AchievementAwardsRCT.Rd
 9dcfded510ec3a852686250e20c258e6 *man/MortalityRates.Rd
 7304421949562f2c392131aaafb1afe0 *man/SATcoaching.Rd
@@ -52,7 +52,7 @@ f9771d80f90ef8e0bd3001113efb4860 *man/pattern_covariance_matrix.Rd
 198f468de2915ab1157789f00487cd23 *man/vcovCR.Rd
 b89fc3af7660f17a83ebb90877f76ace *man/vcovCR.glm.Rd
 ef6e66f7286ce0bf4093e79580610575 *man/vcovCR.gls.Rd
-af208398bac2c5bb6d2fe65267067e03 *man/vcovCR.ivreg.Rd
+641da2ab49f0fa699e13c90318508f6e *man/vcovCR.ivreg.Rd
 56e10ed54e4b8cfedf2aad822c90a861 *man/vcovCR.lm.Rd
 5a3090b35b0fe3d26d48b7be39194c33 *man/vcovCR.lme.Rd
 a6508917e5d0fa4e1916d6fe975bbfc6 *man/vcovCR.lmerMod.Rd
@@ -62,6 +62,7 @@ a784c99e52289d62b70f79ad542a25e1 *man/vcovCR.rma.mv.Rd
 b3fb1637bee90baeb2755c88f5dd2895 *man/vcovCR.rma.uni.Rd
 461b9e7729343401861bdfa1f9deebf3 *man/vcovCR.robu.Rd
 77ee716352046c1d86deb383d1d5497a *tests/testthat.R
+7b4feabc94745c032a3b14e1ced26d5c *tests/testthat/test_AER_ivreg.R
 420b29172eb62c3e952d5f690fb0ed7e *tests/testthat/test_Wald.R
 496dade7481c704545b42e21d53040ff *tests/testthat/test_coef.R
 57264754aa780ff807794104686098c3 *tests/testthat/test_conf_int.R
@@ -71,7 +72,7 @@ af8bd599de28704382d474ea15410ba3 *tests/testthat/test_glm_logit.R
 31083daff7e3904291808f2051f8b244 *tests/testthat/test_ignore_absorption.R
 d544ad56c93e1f10a7e00c09521f364a *tests/testthat/test_impute_covariance_matrix.R
 f31d0900fcf58534bc397aa43473f560 *tests/testthat/test_intercept_formulas.R
-9afb94344689953f303b6795a4e78721 *tests/testthat/test_ivreg.R
+4f654c9b380ea95765496c051607a742 *tests/testthat/test_ivreg_ivreg.R
 af12f4a8e33cda24ae068e8f88f3cd44 *tests/testthat/test_linear_contrast.R
 e1463e069b6705b8eb2aebff355d58fa *tests/testthat/test_lm.R
 73f82f16b1cac2e57a23a362f1e7f41c *tests/testthat/test_lme_2level.R
@@ -80,7 +81,7 @@ e1463e069b6705b8eb2aebff355d58fa *tests/testthat/test_lm.R
 14b742f504dc42d71f27be05d19b0b9f *tests/testthat/test_lmerMod.R
 0032bb715b62139c7294f6bb88bd8df1 *tests/testthat/test_mlm.R
 617b13bf16fdb40eb0b06457d1e22474 *tests/testthat/test_plm-ID-variables.R
-b3b447b54ac32d73740d429d8f906353 *tests/testthat/test_plm-first-differences.R
+588b5b0d192ac5155fb007744d367ee4 *tests/testthat/test_plm-first-differences.R
 37add75e3bf443e3fb06038e6a014293 *tests/testthat/test_plm-fixed-effects.R
 56da486857e8d4504e8aa8c1fe7937da *tests/testthat/test_plm-random-effects.R
 4597e0d7dfbedc264c0ea336bc5229be *tests/testthat/test_plm-unbalanced-fixed-effects.R
