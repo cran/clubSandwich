@@ -12,7 +12,7 @@
 
 <meta name="author" content="James E. Pustejovsky" />
 
-<meta name="date" content="2023-07-10" />
+<meta name="date" content="2023-07-19" />
 
 <title>Meta-analysis with cluster-robust variance estimation</title>
 
@@ -341,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Meta-analysis with cluster-robust variance
 estimation</h1>
 <h4 class="author">James E. Pustejovsky</h4>
-<h4 class="date">2023-07-10</h4>
+<h4 class="date">2023-07-19</h4>
 
 
 
@@ -366,24 +366,24 @@ fit in several different ways. We first demonstrate using the
 the <code>metafor</code> package (Viechtbauer, 2010).</p>
 <div id="robumeta-model" class="section level2">
 <h2>robumeta model</h2>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(clubSandwich)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(robumeta)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(dropoutPrevention)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># clean formatting</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(dropoutPrevention)[<span class="dv">7</span><span class="sc">:</span><span class="dv">8</span>] <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;eval&quot;</span>,<span class="st">&quot;implement&quot;</span>)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">levels</span>(dropoutPrevention<span class="sc">$</span>eval) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;independent&quot;</span>,<span class="st">&quot;indirect&quot;</span>,<span class="st">&quot;planning&quot;</span>,<span class="st">&quot;delivery&quot;</span>)</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">levels</span>(dropoutPrevention<span class="sc">$</span>implement) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;low&quot;</span>,<span class="st">&quot;medium&quot;</span>,<span class="st">&quot;high&quot;</span>)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">levels</span>(dropoutPrevention<span class="sc">$</span>program_site) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;community&quot;</span>,<span class="st">&quot;mixed&quot;</span>,<span class="st">&quot;classroom&quot;</span>,<span class="st">&quot;school&quot;</span>)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">levels</span>(dropoutPrevention<span class="sc">$</span>study_design) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;matched&quot;</span>,<span class="st">&quot;unmatched&quot;</span>,<span class="st">&quot;RCT&quot;</span>)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">levels</span>(dropoutPrevention<span class="sc">$</span>adjusted) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;no&quot;</span>,<span class="st">&quot;yes&quot;</span>)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>m3_robu <span class="ot">&lt;-</span> <span class="fu">robu</span>(LOR1 <span class="sc">~</span> study_design <span class="sc">+</span> attrition <span class="sc">+</span> group_equivalence <span class="sc">+</span> adjusted</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>                <span class="sc">+</span> outcome <span class="sc">+</span> eval <span class="sc">+</span> male_pct <span class="sc">+</span> white_pct <span class="sc">+</span> average_age</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>                <span class="sc">+</span> implement <span class="sc">+</span> program_site <span class="sc">+</span> duration <span class="sc">+</span> service_hrs, </span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>                <span class="at">data =</span> dropoutPrevention, <span class="at">studynum =</span> studyID, <span class="at">var.eff.size =</span> varLOR, </span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                <span class="at">modelweights =</span> <span class="st">&quot;HIER&quot;</span>)</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(m3_robu)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(clubSandwich)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(robumeta)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">data</span>(dropoutPrevention)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co"># clean formatting</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="fu">names</span>(dropoutPrevention)[<span class="dv">7</span><span class="sc">:</span><span class="dv">8</span>] <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;eval&quot;</span>,<span class="st">&quot;implement&quot;</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="fu">levels</span>(dropoutPrevention<span class="sc">$</span>eval) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;independent&quot;</span>,<span class="st">&quot;indirect&quot;</span>,<span class="st">&quot;planning&quot;</span>,<span class="st">&quot;delivery&quot;</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="fu">levels</span>(dropoutPrevention<span class="sc">$</span>implement) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;low&quot;</span>,<span class="st">&quot;medium&quot;</span>,<span class="st">&quot;high&quot;</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="fu">levels</span>(dropoutPrevention<span class="sc">$</span>program_site) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;community&quot;</span>,<span class="st">&quot;mixed&quot;</span>,<span class="st">&quot;classroom&quot;</span>,<span class="st">&quot;school&quot;</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="fu">levels</span>(dropoutPrevention<span class="sc">$</span>study_design) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;matched&quot;</span>,<span class="st">&quot;unmatched&quot;</span>,<span class="st">&quot;RCT&quot;</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="fu">levels</span>(dropoutPrevention<span class="sc">$</span>adjusted) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;no&quot;</span>,<span class="st">&quot;yes&quot;</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>m3_robu <span class="ot">&lt;-</span> <span class="fu">robu</span>(LOR1 <span class="sc">~</span> study_design <span class="sc">+</span> attrition <span class="sc">+</span> group_equivalence <span class="sc">+</span> adjusted</span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>                <span class="sc">+</span> outcome <span class="sc">+</span> eval <span class="sc">+</span> male_pct <span class="sc">+</span> white_pct <span class="sc">+</span> average_age</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>                <span class="sc">+</span> implement <span class="sc">+</span> program_site <span class="sc">+</span> duration <span class="sc">+</span> service_hrs, </span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>                <span class="at">data =</span> dropoutPrevention, <span class="at">studynum =</span> studyID, <span class="at">var.eff.size =</span> varLOR, </span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>                <span class="at">modelweights =</span> <span class="st">&quot;HIER&quot;</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="fu">print</span>(m3_robu)</span></code></pre></div>
 <pre><code>## RVE: Hierarchical Effects Model with Small-Sample Corrections 
 ## 
 ## Model: LOR1 ~ study_design + attrition + group_equivalence + adjusted + outcome + eval + male_pct + white_pct + average_age + implement + program_site + duration + service_hrs 
@@ -431,7 +431,7 @@ adjusted F-test for this hypothesis can be obtained as follows. The
 <code>vcov = &quot;CR2&quot;</code> option means that the standard errors will be
 corrected using the bias-reduced linearization estimator described in
 Tipton and Pustejovsky (2015).</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(m3_robu, <span class="at">constraints =</span> <span class="fu">constrain_zero</span>(<span class="dv">10</span><span class="sc">:</span><span class="dv">12</span>), <span class="at">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">Wald_test</span>(m3_robu, <span class="at">constraints =</span> <span class="fu">constrain_zero</span>(<span class="dv">10</span><span class="sc">:</span><span class="dv">12</span>), <span class="at">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</span></code></pre></div>
 <pre><code>##  test Fstat df_num df_denom  p_val sig
 ##   HTZ  2.78      3     16.8 0.0732   .</code></pre>
 <p>By default, the <code>Wald_test</code> function provides an F-type
@@ -442,7 +442,7 @@ studies in the data, and has a p-value that is not quite significant at
 conventional levels. The low degrees of freedom are a consequence of the
 fact that one of the levels of <code>evaluator independence</code> has
 only a few effect sizes in it:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(dropoutPrevention<span class="sc">$</span>eval)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">table</span>(dropoutPrevention<span class="sc">$</span>eval)</span></code></pre></div>
 <pre><code>## 
 ## independent    indirect    planning    delivery 
 ##           6          33          43         303</code></pre>
@@ -455,15 +455,15 @@ specification, but use REML to estimate the variance components
 (<code>robumeta</code> uses a method-of-moments estimator), as well as a
 somewhat different weighting scheme than that used in
 <code>robumeta</code>.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(metafor)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">library</span>(metafor)</span></code></pre></div>
 <pre><code>## Warning: package &#39;metafor&#39; was built under R version 4.2.3</code></pre>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m3_metafor <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(LOR1 <span class="sc">~</span> study_design <span class="sc">+</span> attrition <span class="sc">+</span> group_equivalence <span class="sc">+</span> adjusted</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>                      <span class="sc">+</span> outcome <span class="sc">+</span> eval</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>                      <span class="sc">+</span> male_pct <span class="sc">+</span> white_pct <span class="sc">+</span> average_age</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>                      <span class="sc">+</span> implement <span class="sc">+</span> program_site <span class="sc">+</span> duration <span class="sc">+</span> service_hrs, </span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>                      <span class="at">V =</span> varLOR, <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> studyID, <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> studySample),</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>                     <span class="at">data =</span> dropoutPrevention)</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m3_metafor)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>m3_metafor <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(LOR1 <span class="sc">~</span> study_design <span class="sc">+</span> attrition <span class="sc">+</span> group_equivalence <span class="sc">+</span> adjusted</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>                      <span class="sc">+</span> outcome <span class="sc">+</span> eval</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>                      <span class="sc">+</span> male_pct <span class="sc">+</span> white_pct <span class="sc">+</span> average_age</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>                      <span class="sc">+</span> implement <span class="sc">+</span> program_site <span class="sc">+</span> duration <span class="sc">+</span> service_hrs, </span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>                      <span class="at">V =</span> varLOR, <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> studyID, <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> studySample),</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>                     <span class="at">data =</span> dropoutPrevention)</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="fu">summary</span>(m3_metafor)</span></code></pre></div>
 <pre><code>## 
 ## Multivariate Meta-Analysis Model (k = 385; method: REML)
 ## 
@@ -514,7 +514,7 @@ somewhat different weighting scheme than that used in
 and confidence intervals. The <code>coef_test</code> function from
 <code>clubSandwich</code> will calculate robust standard errors and
 robust t-tests for each of the coefficients:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coef_test</span>(m3_metafor, <span class="at">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">coef_test</span>(m3_metafor, <span class="at">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</span></code></pre></div>
 <pre><code>##                  Coef.  Estimate       SE  t-stat d.f. (Satt) p-val (Satt) Sig.
 ##                intrcpt  0.529569 0.724851  0.7306       20.08      0.47347     
 ##  study_designunmatched -0.049434 0.204152 -0.2421       58.42      0.80952     
@@ -544,7 +544,7 @@ metafor model. This can be specified explicitly by including the option
 <code>cluster = dropoutPrevention$studyID</code> in the call.</p>
 <p>The F-test for degree of evaluator independence uses the same syntax
 as before:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Wald_test</span>(m3_metafor, <span class="at">constraints =</span> <span class="fu">constrain_zero</span>(<span class="dv">10</span><span class="sc">:</span><span class="dv">12</span>), <span class="at">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">Wald_test</span>(m3_metafor, <span class="at">constraints =</span> <span class="fu">constrain_zero</span>(<span class="dv">10</span><span class="sc">:</span><span class="dv">12</span>), <span class="at">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</span></code></pre></div>
 <pre><code>##  test Fstat df_num df_denom  p_val sig
 ##   HTZ  2.71      3     18.3 0.0753   .</code></pre>
 <p>Despite some differences in weighting schemes, the p-value is very
