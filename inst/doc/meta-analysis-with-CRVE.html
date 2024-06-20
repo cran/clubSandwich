@@ -12,7 +12,7 @@
 
 <meta name="author" content="James E. Pustejovsky" />
 
-<meta name="date" content="2023-07-19" />
+<meta name="date" content="2024-06-20" />
 
 <title>Meta-analysis with cluster-robust variance estimation</title>
 
@@ -51,7 +51,7 @@ overflow: visible;
 </style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -341,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Meta-analysis with cluster-robust variance
 estimation</h1>
 <h4 class="author">James E. Pustejovsky</h4>
-<h4 class="date">2023-07-19</h4>
+<h4 class="date">2024-06-20</h4>
 
 
 
@@ -455,15 +455,14 @@ specification, but use REML to estimate the variance components
 (<code>robumeta</code> uses a method-of-moments estimator), as well as a
 somewhat different weighting scheme than that used in
 <code>robumeta</code>.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">library</span>(metafor)</span></code></pre></div>
-<pre><code>## Warning: package &#39;metafor&#39; was built under R version 4.2.3</code></pre>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>m3_metafor <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(LOR1 <span class="sc">~</span> study_design <span class="sc">+</span> attrition <span class="sc">+</span> group_equivalence <span class="sc">+</span> adjusted</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>                      <span class="sc">+</span> outcome <span class="sc">+</span> eval</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>                      <span class="sc">+</span> male_pct <span class="sc">+</span> white_pct <span class="sc">+</span> average_age</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>                      <span class="sc">+</span> implement <span class="sc">+</span> program_site <span class="sc">+</span> duration <span class="sc">+</span> service_hrs, </span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>                      <span class="at">V =</span> varLOR, <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> studyID, <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> studySample),</span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>                     <span class="at">data =</span> dropoutPrevention)</span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="fu">summary</span>(m3_metafor)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">library</span>(metafor)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>m3_metafor <span class="ot">&lt;-</span> <span class="fu">rma.mv</span>(LOR1 <span class="sc">~</span> study_design <span class="sc">+</span> attrition <span class="sc">+</span> group_equivalence <span class="sc">+</span> adjusted</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>                      <span class="sc">+</span> outcome <span class="sc">+</span> eval</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>                      <span class="sc">+</span> male_pct <span class="sc">+</span> white_pct <span class="sc">+</span> average_age</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>                      <span class="sc">+</span> implement <span class="sc">+</span> program_site <span class="sc">+</span> duration <span class="sc">+</span> service_hrs, </span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>                      <span class="at">V =</span> varLOR, <span class="at">random =</span> <span class="fu">list</span>(<span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> studyID, <span class="sc">~</span> <span class="dv">1</span> <span class="sc">|</span> studySample),</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>                     <span class="at">data =</span> dropoutPrevention)</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="fu">summary</span>(m3_metafor)</span></code></pre></div>
 <pre><code>## 
 ## Multivariate Meta-Analysis Model (k = 385; method: REML)
 ## 
@@ -514,7 +513,7 @@ somewhat different weighting scheme than that used in
 and confidence intervals. The <code>coef_test</code> function from
 <code>clubSandwich</code> will calculate robust standard errors and
 robust t-tests for each of the coefficients:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">coef_test</span>(m3_metafor, <span class="at">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">coef_test</span>(m3_metafor, <span class="at">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</span></code></pre></div>
 <pre><code>##                  Coef.  Estimate       SE  t-stat d.f. (Satt) p-val (Satt) Sig.
 ##                intrcpt  0.529569 0.724851  0.7306       20.08      0.47347     
 ##  study_designunmatched -0.049434 0.204152 -0.2421       58.42      0.80952     
@@ -544,7 +543,7 @@ metafor model. This can be specified explicitly by including the option
 <code>cluster = dropoutPrevention$studyID</code> in the call.</p>
 <p>The F-test for degree of evaluator independence uses the same syntax
 as before:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">Wald_test</span>(m3_metafor, <span class="at">constraints =</span> <span class="fu">constrain_zero</span>(<span class="dv">10</span><span class="sc">:</span><span class="dv">12</span>), <span class="at">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">Wald_test</span>(m3_metafor, <span class="at">constraints =</span> <span class="fu">constrain_zero</span>(<span class="dv">10</span><span class="sc">:</span><span class="dv">12</span>), <span class="at">vcov =</span> <span class="st">&quot;CR2&quot;</span>)</span></code></pre></div>
 <pre><code>##  test Fstat df_num df_denom  p_val sig
 ##   HTZ  2.71      3     18.3 0.0753   .</code></pre>
 <p>Despite some differences in weighting schemes, the p-value is very

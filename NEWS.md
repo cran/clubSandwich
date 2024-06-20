@@ -1,3 +1,8 @@
+# clubSandwich 0.5.11
+
+* Corrected a unit test related to the plm package, for compatibility with upcoming release of plm.
+* Deprecated `impute_covariance_matrix()` and `pattern_covariance_matrix()`, because they have been superseded by `metafor::vcalc()`.
+
 # clubSandwich 0.5.10
 
 * Fixed another bug in `linear_contrast()` to handle specified contrasts that are scalars when variance-covariance matrix is computed with a working model that is not inverse-variance.

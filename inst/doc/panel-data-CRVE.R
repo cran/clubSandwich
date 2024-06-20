@@ -1,4 +1,4 @@
-## ---- message = FALSE, warning = FALSE------------------------------------------------------------
+## ----message = FALSE, warning = FALSE-------------------------------------------------------------
 library(clubSandwich)
 data(MortalityRates)
 
@@ -18,11 +18,11 @@ coef_test(lm_unweighted, vcov = "CR1",
 coef_test(lm_unweighted, vcov = "CR2", 
           cluster = MV_deaths$state, test = "Satterthwaite")[1:2,]
 
-## ---- echo = FALSE, results = "asis"--------------------------------------------------------------
+## ----echo = FALSE, results = "asis"---------------------------------------------------------------
 plm_available <- requireNamespace("plm", quietly = TRUE)
 if (!plm_available) cat("## Building the remainder of the vignette requires the plm package. Please install it. {-}")
 
-## ---- message = FALSE, eval = plm_available-------------------------------------------------------
+## ----message = FALSE, eval = plm_available--------------------------------------------------------
 library(plm)
 plm_unweighted <- plm(mrate ~ legal + beertaxa, data = MV_deaths, 
                       effect = "twoways", index = c("state","year"))
@@ -42,14 +42,14 @@ coef_test(lm_weighted, vcov = "CR2",
           cluster = MV_deaths$state, target = 1 / MV_deaths$pop, 
           test = "Satterthwaite")[1:2,]
 
-## ---- eval = plm_available------------------------------------------------------------------------
+## ----eval = plm_available-------------------------------------------------------------------------
 plm_random <- plm(mrate ~ 0 + legal + beertaxa + year, data = MV_deaths, 
                   effect = "individual", index = c("state","year"),
                   model = "random")
 coef_test(plm_random, vcov = "CR1", test = "naive-t")[1:2,]
 coef_test(plm_random, vcov = "CR2", test = "Satterthwaite")[1:2,]
 
-## ---- eval = plm_available------------------------------------------------------------------------
+## ----eval = plm_available-------------------------------------------------------------------------
 MV_deaths <- within(MV_deaths, {
   legal_cent <- legal - tapply(legal, state, mean)[factor(state)]
   beer_cent <- beertaxa - tapply(beertaxa, state, mean)[factor(state)]
@@ -61,12 +61,12 @@ plm_Hausman <- plm(mrate ~ 0 + legal + beertaxa + legal_cent + beer_cent + facto
                    model = "random")
 coef_test(plm_Hausman, vcov = "CR2", test = "Satterthwaite")[1:4,]
 
-## ---- eval = plm_available------------------------------------------------------------------------
+## ----eval = plm_available-------------------------------------------------------------------------
 Wald_test(plm_Hausman, 
           constraints = constrain_zero(c("legal_cent","beer_cent")), 
           vcov = "CR1", test = "chi-sq")
 
-## ---- eval = plm_available------------------------------------------------------------------------
+## ----eval = plm_available-------------------------------------------------------------------------
 Wald_test(plm_Hausman, 
           constraints = constrain_zero(c("legal_cent","beer_cent")), 
           vcov = "CR2")

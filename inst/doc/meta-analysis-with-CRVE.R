@@ -1,4 +1,4 @@
-## ---- echo = FALSE, results = "asis", message = FALSE, warning = FALSE--------
+## ----echo = FALSE, results = "asis", message = FALSE, warning = FALSE---------
 robu_available <- requireNamespace("robumeta", quietly = TRUE) 
 meta_available <- requireNamespace("metafor", quietly = TRUE)
 
@@ -7,10 +7,10 @@ knitr::opts_chunk$set(eval = robu_available & meta_available)
 if (!robu_available) cat("## Building this vignette requires the robumeta package. Please install it. {-} \n")
 if (!meta_available) cat("## Building this vignette requires the metafor package. Please install it. {-} \n")
 
-## ---- include=FALSE-------------------------------------------------------------------------------
+## ----include=FALSE--------------------------------------------------------------------------------
 options(width = 100)
 
-## ---- message = FALSE-----------------------------------------------------------------------------
+## ----message = FALSE------------------------------------------------------------------------------
 library(clubSandwich)
 library(robumeta)
 data(dropoutPrevention)
@@ -36,7 +36,7 @@ Wald_test(m3_robu, constraints = constrain_zero(10:12), vcov = "CR2")
 ## -------------------------------------------------------------------------------------------------
 table(dropoutPrevention$eval)
 
-## ---- message = FALSE-----------------------------------------------------------------------------
+## ----message = FALSE------------------------------------------------------------------------------
 library(metafor)
 m3_metafor <- rma.mv(LOR1 ~ study_design + attrition + group_equivalence + adjusted
                       + outcome + eval
