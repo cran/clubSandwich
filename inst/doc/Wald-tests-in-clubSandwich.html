@@ -12,7 +12,7 @@
 
 <meta name="author" content="James E. Pustejovsky" />
 
-<meta name="date" content="2024-06-20" />
+<meta name="date" content="2025-03-31" />
 
 <title>Wald tests of multiple-constraint null hypotheses</title>
 
@@ -62,7 +62,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -364,7 +364,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Wald tests of multiple-constraint null
 hypotheses</h1>
 <h4 class="author">James E. Pustejovsky</h4>
-<h4 class="date">2024-06-20</h4>
+<h4 class="date">2025-03-31</h4>
 
 
 <div id="TOC">
@@ -457,8 +457,8 @@ distribution, with numerator degrees of freedom <span class="math inline">\(q\)<
 based on a generalization of the Satterthwaite approximation.</p>
 <p>The <code>Wald_test()</code> function has three main arguments:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">args</span>(Wald_test)</span></code></pre></div>
-<pre><code>## function (obj, constraints, vcov, test = &quot;HTZ&quot;, tidy = FALSE, 
-##     ...) 
+<pre><code>## function (obj, constraints, vcov, null_constant = 0, test = &quot;HTZ&quot;, 
+##     tidy = FALSE, adjustment_method = &quot;none&quot;, ...) 
 ## NULL</code></pre>
 <ul>
 <li>The <code>obj</code> argument is used to specify the estimated
@@ -488,10 +488,11 @@ e_{ij},
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>lm_trt <span class="ot">&lt;-</span> <span class="fu">lm</span>(math1 <span class="sc">~</span> stark, <span class="at">data =</span> STAR)</span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>V_trt <span class="ot">&lt;-</span> <span class="fu">vcovCR</span>(lm_trt, <span class="at">cluster =</span> STAR<span class="sc">$</span>schoolidk, <span class="at">type =</span> <span class="st">&quot;CR2&quot;</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">coef_test</span>(lm_trt, <span class="at">vcov =</span> V_trt)</span></code></pre></div>
-<pre><code>##        Coef. Estimate   SE  t-stat d.f. (Satt) p-val (Satt) Sig.
-##  (Intercept)  531.727 2.78 191.506        59.9       &lt;0.001  ***
-##   starksmall    9.469 2.30   4.114        65.6       &lt;0.001  ***
-##    starkaide   -0.483 1.86  -0.259        65.6        0.796</code></pre>
+<pre><code>## Alternative hypothesis: two-sided 
+##        Coef. Estimate   SE Null value  t-stat d.f. (Satt) p-val (Satt) Sig.
+##  (Intercept)  531.727 2.78          0 191.506        59.9       &lt;0.001  ***
+##   starksmall    9.469 2.30          0   4.114        65.6       &lt;0.001  ***
+##    starkaide   -0.483 1.86          0  -0.259        65.6        0.796</code></pre>
 <p>In this estimating equation, the coefficients <span class="math inline">\(\beta_1\)</span> and <span class="math inline">\(\beta_2\)</span> represent treatment effects, or
 differences in average math scores relative to the reference level of
 <code>stark</code>, which in this case is a regular-size class. The
@@ -621,10 +622,11 @@ term:</p>
 <div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>lm_sep <span class="ot">&lt;-</span> <span class="fu">lm</span>(math1 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> stark, <span class="at">data =</span> STAR)</span>
 <span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>V_sep <span class="ot">&lt;-</span> <span class="fu">vcovCR</span>(lm_sep, <span class="at">cluster =</span> STAR<span class="sc">$</span>schoolidk, <span class="at">type =</span> <span class="st">&quot;CR2&quot;</span>)</span>
 <span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a><span class="fu">coef_test</span>(lm_sep, <span class="at">vcov =</span> V_sep)</span></code></pre></div>
-<pre><code>##         Coef. Estimate   SE t-stat d.f. (Satt) p-val (Satt) Sig.
-##  starkregular      532 2.78    192        59.9       &lt;0.001  ***
-##    starksmall      541 2.89    187        65.0       &lt;0.001  ***
-##     starkaide      531 2.72    195        64.3       &lt;0.001  ***</code></pre>
+<pre><code>## Alternative hypothesis: two-sided 
+##         Coef. Estimate   SE Null value t-stat d.f. (Satt) p-val (Satt) Sig.
+##  starkregular      532 2.78          0    192        59.9       &lt;0.001  ***
+##    starksmall      541 2.89          0    187        65.0       &lt;0.001  ***
+##     starkaide      531 2.72          0    195        64.3       &lt;0.001  ***</code></pre>
 <p>In this parameterization, the coefficients <span class="math inline">\(\beta_0\)</span>, <span class="math inline">\(\beta_1\)</span>, and <span class="math inline">\(\beta_2\)</span> represent the average math
 performance levels of students in each of the treatment conditions. The
 t-tests and p-values now have a very different interpretation because
@@ -727,38 +729,39 @@ R:</p>
 <div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a>lm_urbanicity <span class="ot">&lt;-</span> <span class="fu">lm</span>(math1 <span class="sc">~</span> schoolk <span class="sc">*</span> stark <span class="sc">+</span> gender <span class="sc">+</span> ethnicity <span class="sc">+</span> lunchk, <span class="at">data =</span> STAR)</span>
 <span id="cb37-2"><a href="#cb37-2" tabindex="-1"></a>V_urbanicity <span class="ot">&lt;-</span> <span class="fu">vcovCR</span>(lm_urbanicity, <span class="at">cluster =</span> STAR<span class="sc">$</span>schoolidk, <span class="at">type =</span> <span class="st">&quot;CR2&quot;</span>)</span>
 <span id="cb37-3"><a href="#cb37-3" tabindex="-1"></a><span class="fu">coef_test</span>(lm_urbanicity, <span class="at">vcov =</span> V_urbanicity)</span></code></pre></div>
-<pre><code>##                       Coef. Estimate    SE  t-stat d.f. (Satt) p-val (Satt)
-##                 (Intercept)   542.62  5.91 91.8599       21.70       &lt;0.001
-##             schoolksuburban     2.77  6.76  0.4100       28.35       0.6849
-##                schoolkrural     1.03  6.38  0.1616       30.74       0.8727
-##                  starksmall     9.42  4.56  2.0649       17.10       0.0544
-##                   starkaide    -4.27  2.17 -1.9631       16.73       0.0665
-##                genderfemale     2.14  1.20  1.7773       67.14       0.0800
-##               ethnicityafam   -16.79  4.19 -4.0026       34.94       &lt;0.001
-##              ethnicityasian    13.19 11.02  1.1963        6.23       0.2751
-##           ethnicityhispanic    39.23 20.62  1.9028        1.01       0.3067
-##              ethnicityother     8.86 18.78  0.4720        3.02       0.6690
-##                  lunchkfree   -19.37  2.04 -9.4848       57.38       &lt;0.001
-##  schoolksuburban:starksmall     3.03  6.39  0.4746       28.94       0.6386
-##     schoolkrural:starksmall    -0.31  5.58 -0.0555       34.04       0.9560
-##   schoolksuburban:starkaide     5.10  3.72  1.3711       28.64       0.1810
-##      schoolkrural:starkaide     8.16  3.16  2.5857       34.30       0.0141
-##  Sig.
-##   ***
-##      
-##      
-##     .
-##     .
-##     .
-##   ***
-##      
-##      
-##      
-##   ***
-##      
-##      
-##      
-##     *</code></pre>
+<pre><code>## Alternative hypothesis: two-sided 
+##                       Coef. Estimate    SE Null value  t-stat d.f. (Satt)
+##                 (Intercept)   542.62  5.91          0 91.8599       21.70
+##             schoolksuburban     2.77  6.76          0  0.4100       28.35
+##                schoolkrural     1.03  6.38          0  0.1616       30.74
+##                  starksmall     9.42  4.56          0  2.0649       17.10
+##                   starkaide    -4.27  2.17          0 -1.9631       16.73
+##                genderfemale     2.14  1.20          0  1.7773       67.14
+##               ethnicityafam   -16.79  4.19          0 -4.0026       34.94
+##              ethnicityasian    13.19 11.02          0  1.1963        6.23
+##           ethnicityhispanic    39.23 20.62          0  1.9028        1.01
+##              ethnicityother     8.86 18.78          0  0.4720        3.02
+##                  lunchkfree   -19.37  2.04          0 -9.4848       57.38
+##  schoolksuburban:starksmall     3.03  6.39          0  0.4746       28.94
+##     schoolkrural:starksmall    -0.31  5.58          0 -0.0555       34.04
+##   schoolksuburban:starkaide     5.10  3.72          0  1.3711       28.64
+##      schoolkrural:starkaide     8.16  3.16          0  2.5857       34.30
+##  p-val (Satt) Sig.
+##        &lt;0.001  ***
+##        0.6849     
+##        0.8727     
+##        0.0544    .
+##        0.0665    .
+##        0.0800    .
+##        &lt;0.001  ***
+##        0.2751     
+##        0.3067     
+##        0.6690     
+##        &lt;0.001  ***
+##        0.6386     
+##        0.9560     
+##        0.1810     
+##        0.0141    *</code></pre>
 <p>With this specification, there are several different null hypotheses
 that we might want to test. For one, perhaps we want to see if there is
 <em>any</em> variation in treatment effects across different levels of
@@ -849,10 +852,11 @@ other <code>constrain_*()</code> functions.</p>
 <p>To demonstrate, consider the separate-intercepts specification of the
 simpler regression model:</p>
 <div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" tabindex="-1"></a><span class="fu">coef_test</span>(lm_sep, <span class="at">vcov =</span> V_sep)</span></code></pre></div>
-<pre><code>##         Coef. Estimate   SE t-stat d.f. (Satt) p-val (Satt) Sig.
-##  starkregular      532 2.78    192        59.9       &lt;0.001  ***
-##    starksmall      541 2.89    187        65.0       &lt;0.001  ***
-##     starkaide      531 2.72    195        64.3       &lt;0.001  ***</code></pre>
+<pre><code>## Alternative hypothesis: two-sided 
+##         Coef. Estimate   SE Null value t-stat d.f. (Satt) p-val (Satt) Sig.
+##  starkregular      532 2.78          0    192        59.9       &lt;0.001  ***
+##    starksmall      541 2.89          0    187        65.0       &lt;0.001  ***
+##     starkaide      531 2.72          0    195        64.3       &lt;0.001  ***</code></pre>
 <p>This specification is nice because it lets us simply read off the
 average outcomes for each group. However, we will naturally also want to
 know about whether there are differences between the groups, so we’ll
@@ -898,38 +902,39 @@ method.</p>
 treatment-by-urbanicity interactions. Here’s the model results
 again:</p>
 <div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" tabindex="-1"></a><span class="fu">coef_test</span>(lm_urbanicity, <span class="at">vcov =</span> V_urbanicity)</span></code></pre></div>
-<pre><code>##                       Coef. Estimate    SE  t-stat d.f. (Satt) p-val (Satt)
-##                 (Intercept)   542.62  5.91 91.8599       21.70       &lt;0.001
-##             schoolksuburban     2.77  6.76  0.4100       28.35       0.6849
-##                schoolkrural     1.03  6.38  0.1616       30.74       0.8727
-##                  starksmall     9.42  4.56  2.0649       17.10       0.0544
-##                   starkaide    -4.27  2.17 -1.9631       16.73       0.0665
-##                genderfemale     2.14  1.20  1.7773       67.14       0.0800
-##               ethnicityafam   -16.79  4.19 -4.0026       34.94       &lt;0.001
-##              ethnicityasian    13.19 11.02  1.1963        6.23       0.2751
-##           ethnicityhispanic    39.23 20.62  1.9028        1.01       0.3067
-##              ethnicityother     8.86 18.78  0.4720        3.02       0.6690
-##                  lunchkfree   -19.37  2.04 -9.4848       57.38       &lt;0.001
-##  schoolksuburban:starksmall     3.03  6.39  0.4746       28.94       0.6386
-##     schoolkrural:starksmall    -0.31  5.58 -0.0555       34.04       0.9560
-##   schoolksuburban:starkaide     5.10  3.72  1.3711       28.64       0.1810
-##      schoolkrural:starkaide     8.16  3.16  2.5857       34.30       0.0141
-##  Sig.
-##   ***
-##      
-##      
-##     .
-##     .
-##     .
-##   ***
-##      
-##      
-##      
-##   ***
-##      
-##      
-##      
-##     *</code></pre>
+<pre><code>## Alternative hypothesis: two-sided 
+##                       Coef. Estimate    SE Null value  t-stat d.f. (Satt)
+##                 (Intercept)   542.62  5.91          0 91.8599       21.70
+##             schoolksuburban     2.77  6.76          0  0.4100       28.35
+##                schoolkrural     1.03  6.38          0  0.1616       30.74
+##                  starksmall     9.42  4.56          0  2.0649       17.10
+##                   starkaide    -4.27  2.17          0 -1.9631       16.73
+##                genderfemale     2.14  1.20          0  1.7773       67.14
+##               ethnicityafam   -16.79  4.19          0 -4.0026       34.94
+##              ethnicityasian    13.19 11.02          0  1.1963        6.23
+##           ethnicityhispanic    39.23 20.62          0  1.9028        1.01
+##              ethnicityother     8.86 18.78          0  0.4720        3.02
+##                  lunchkfree   -19.37  2.04          0 -9.4848       57.38
+##  schoolksuburban:starksmall     3.03  6.39          0  0.4746       28.94
+##     schoolkrural:starksmall    -0.31  5.58          0 -0.0555       34.04
+##   schoolksuburban:starkaide     5.10  3.72          0  1.3711       28.64
+##      schoolkrural:starkaide     8.16  3.16          0  2.5857       34.30
+##  p-val (Satt) Sig.
+##        &lt;0.001  ***
+##        0.6849     
+##        0.8727     
+##        0.0544    .
+##        0.0665    .
+##        0.0800    .
+##        &lt;0.001  ***
+##        0.2751     
+##        0.3067     
+##        0.6690     
+##        &lt;0.001  ***
+##        0.6386     
+##        0.9560     
+##        0.1810     
+##        0.0141    *</code></pre>
 <p>Suppose that we are interested in the effect of small versus regular
 size classes, and in particular whether this effect varies across
 schools in different areas. The coefficients on

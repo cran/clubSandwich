@@ -4,26 +4,49 @@
 \alias{Wald_test}
 \title{Test parameter constraints in a fitted linear regression model}
 \usage{
-Wald_test(obj, constraints, vcov, test = "HTZ", tidy = FALSE, ...)
+Wald_test(
+  obj,
+  constraints,
+  vcov,
+  null_constant = 0,
+  test = "HTZ",
+  tidy = FALSE,
+  adjustment_method = "none",
+  ...
+)
 }
 \arguments{
 \item{obj}{Fitted model for which to calculate Wald tests.}
 
-\item{constraints}{List of one or more constraints to test. See details and
-examples.}
+\item{constraints}{constraint or list of multiple constraints to test. See
+details and examples.}
 
 \item{vcov}{Variance covariance matrix estimated using \code{vcovCR} or a
 character string specifying which small-sample adjustment should be used to
 calculate the variance-covariance.}
 
+\item{null_constant}{vector of null values or list of such vectors for each
+set of constraints to test. For a single \code{constraint}, the null values
+must have length equal to the number of rows in the constraint. For lists
+of null values, each entry must have length equal to the number of rows in
+the corresponding entry of \code{constraints}. Default is \code{0}, in
+which case the null values are taken to be zero (for every entry, if
+\code{constraints} is a list).}
+
 \item{test}{Character vector specifying which small-sample correction(s) to
 calculate. The following corrections are available: \code{"chi-sq"},
-\code{"Naive-F"}, \code{"Naive-Fp"}, \code{"HTA"}, \code{"HTB"}, \code{"HTZ"}, \code{"EDF"},
-\code{"EDT"}. Default is \code{"HTZ"}.}
+\code{"Naive-F"}, \code{"Naive-Fp"}, \code{"HTA"}, \code{"HTB"},
+\code{"HTZ"}, \code{"EDF"}, \code{"EDT"}. Default is \code{"HTZ"}.}
 
 \item{tidy}{Logical value controlling whether to tidy the test results. If
-\code{constraints} is a list with multiple constraints, the result will
-be coerced into a data frame when \code{tidy = TRUE}.}
+\code{constraints} is a list with multiple constraints, the result will be
+coerced into a data frame when \code{tidy = TRUE}.}
+
+\item{adjustment_method}{A character string indicating a multiple comparisons
+correction to apply to p-values in instances where multiple tests are run.
+Possible options are from \code{\link[stats]{p.adjust.methods}}, which is
+passed to \code{\link[stats]{p.adjust}} to correct p-values for multiple
+comparisons. Defaults to \code{"none"}.}
 
 \item{...}{Further arguments passed to \code{\link{vcovCR}}, which are only
 needed if \code{vcov} is a character string.}
@@ -40,7 +63,10 @@ Several different small-sample corrections are available.
 \details{
 Constraints can be specified directly as q X p matrices or
   indirectly through \code{\link{constrain_equal}},
-  \code{\link{constrain_zero}}, or \code{\link{constrain_pairwise}}
+  \code{\link{constrain_zero}}, or \code{\link{constrain_pairwise}}. By
+  default, each constraint will be tested against the null hypothesis that it
+  equal to a zero vector. Non-zero values for null-hypotheses can be
+  specified using the \code{null_constant} argument.
 }
 \examples{
 
@@ -78,7 +104,16 @@ Wald_test(Duncan_fit,
 Wald_test(Duncan_fit,
           constraints = constrain_pairwise(":income", reg_ex = TRUE, with_zero = TRUE),
           vcov = "CR2", cluster = Duncan$cluster)
-          
+
+# Pairwise comparisons of type-by-education slopes, with two tests and 
+# multiple comparisons p-value adjustment
+Wald_test(Duncan_fit,
+          constraints = constrain_pairwise(":education", reg_ex = TRUE),
+          vcov = "CR2",
+          cluster = Duncan$cluster,
+          test = c("HTZ","chi-sq"),
+          adjustment_method = "holm")
+
 })
 
 }
